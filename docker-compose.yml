@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  parser_api:
+    build: ./parsers_api
+    ports:
+      - "8080:8080"
+    volumes:
+      - /LOG/parser_api:/app/logs
+    networks:
+      - app_network
+
+  parser_bot:
+    build: ./parser_bot
+    volumes:
+      - /LOG/parser_bot:/app/logs
+    networks:
+      - app_network
+
+  service_update:
+    build: ./service_update_price
+      networks:
+        - app_network
+
+networks:
+  app_network:

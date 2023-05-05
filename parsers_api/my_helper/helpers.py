@@ -1,7 +1,7 @@
 import asyncio
 import math
 
-from currency_rate import CurrencyRate
+from parsers_api.currency_rate import CurrencyRate
 
 
 async def retry_on_error(func, end_func, *args, max_retries=3, delay=1):

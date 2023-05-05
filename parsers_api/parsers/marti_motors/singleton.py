@@ -1,4 +1,4 @@
-from parsers.browser_handler import BrowserHandler
+from parsers_api.parsers.browser_handler import BrowserHandler
 
 _browser_handler_instance = None
 

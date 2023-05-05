@@ -1,12 +1,11 @@
-import asyncio
 import json
 
-from logger import configure_logger
-from my_helper.helpers import get_price_rub
-from parsers.marti_motors.singleton import browser_handler
-from parsers.marti_motors.helper import accept_cookies, get_description, get_photos_link, get_color_name, get_spec, \
-    get_count_active_photo, get_count, map_photo_to_color
-from parsers.marti_motors.locators import colors_xpath, name_xpath, sizes_xpath, input_size_xpath, id_price, id_sku, \
+from parsers_api.logger import configure_logger
+from parsers_api.my_helper.helpers import get_price_rub
+from parsers_api.parsers.marti_motors.singleton import browser_handler
+from parsers_api.parsers.marti_motors.helper import accept_cookies, get_description, get_photos_link, get_color_name, get_spec, \
+    get_count_active_photo, map_photo_to_color
+from parsers_api.parsers.marti_motors.locators import colors_xpath, name_xpath, sizes_xpath, input_size_xpath, id_price, id_sku, \
     class_sku
 
 logger = configure_logger(__name__)

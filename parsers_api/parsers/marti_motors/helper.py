@@ -1,7 +1,7 @@
 import re
-from parsers.marti_motors.singleton import browser_handler
+from parsers_api.parsers.marti_motors.singleton import browser_handler
 
-from parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, product_descriptions_xpath, \
+from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, product_descriptions_xpath, \
     link_photo_xpath, child_element_color_xpath, photos_slider_xpath, input_count_xpath, button_add_xpath
 
 

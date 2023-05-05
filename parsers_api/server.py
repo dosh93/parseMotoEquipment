@@ -22,7 +22,8 @@ async def add_product():
     if url:
         result = await add_product_marti_motors(url)
         app.logger.info(f'Product with URL "{url}" successfully added')
-        return result, 200
+        product_url = result['productPageUrl']["base"] + result['productPageUrl']["path"]
+        return f"Добавлен продукт. Вот ссылка {product_url}", 200
     else:
         app.logger.error('URL parameter not provided')
         return 'URL parameter not provided', 400
@@ -32,7 +33,7 @@ async def add_product():
 async def update_prices():
     result = await update_price_marti_motors()
     app.logger.debug('Prices of all products successfully updated')
-    return f"Update {result} product", 200
+    return f"Обновлено продуктов: {result}", 200
 
 
 @app.route('/update_price', methods=['GET'])
@@ -43,11 +44,11 @@ async def update_price():
     if url:
         result = await update_price_marti_motors(url=url)
         app.logger.info(f'Price of the product with URL "{url}" successfully updated')
-        return f'Price of the product with URL "{url}" successfully updated', 200
+        return f'Обновлено продуктов: {result}', 200
     elif id_product:
         result = await update_price_marti_motors(id_product=id_product)
         app.logger.info(f'Price of the product with ID {id_product} successfully updated')
-        return f'Price of the product with ID {id_product} successfully updated', 200
+        return f'Обновлено продуктов: {result}', 200
     else:
         app.logger.error('URL or ID parameters not provided')
         return 'URL or ID parameters not provided', 400

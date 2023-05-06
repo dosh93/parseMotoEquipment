@@ -1,4 +1,6 @@
 import configparser
+import os
+
 import requests
 import time
 from datetime import datetime, timedelta
@@ -6,7 +8,8 @@ from datetime import datetime, timedelta
 
 def read_config():
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, "config.ini")
     return config.get('URL', 'url_to_call')
 
 

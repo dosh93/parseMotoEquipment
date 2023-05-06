@@ -1,4 +1,5 @@
 import configparser
+import os
 import re
 import aiohttp
 import aiogram.utils.markdown as md
@@ -12,7 +13,10 @@ from common.logger import configure_logger
 logger = configure_logger(__name__)
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(current_dir, "config.ini")
+
+config.read(config_path)
 
 BOT_TOKEN = config["bot"]["token"]
 ALLOWED_CHAT_IDS = list(map(int, config["bot"]["allowed_chat_ids"].split(',')))

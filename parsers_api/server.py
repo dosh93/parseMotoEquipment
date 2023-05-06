@@ -1,4 +1,6 @@
 import configparser
+import os
+
 from quart import Quart, request
 
 from common.logger import configure_logger
@@ -10,7 +12,10 @@ app = Quart(__name__)
 logger = configure_logger(__name__)
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(current_dir, "config.ini")
+
+config.read(config_path)
 
 host = config.get('flask_app', 'host', fallback='0.0.0.0')
 port = config.getint('flask_app', 'port', fallback=8080)

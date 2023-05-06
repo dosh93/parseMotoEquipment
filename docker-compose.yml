@@ -19,8 +19,8 @@ services:
 
   service_update:
     build: ./service_update_price
-      networks:
-        - app_network
+    networks:
+      - app_network
 
 networks:
   app_network:

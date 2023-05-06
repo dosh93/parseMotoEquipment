@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.8'
 
 services:
   parser_api:
@@ -6,14 +6,14 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /LOG/parser_api:/app/logs
+      - /LOG/parser_api:/parsers_api/logs
     networks:
       - app_network
 
   parser_bot:
     build: ./parser_bot
     volumes:
-      - /LOG/parser_bot:/app/logs
+      - /LOG/parser_bot:/parser_bot/logs
     networks:
       - app_network
 

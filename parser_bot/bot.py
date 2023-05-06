@@ -93,7 +93,7 @@ async def start_handler(message: types.Message):
 @dp.message_handler(lambda message: message.text.startswith("/add "))
 async def add_product_handler(message: types.Message):
     logger.info(f"Start command {message.text} with chat_id {message.chat.id}")
-    data = message.text[13:].strip()
+    data = message.text[4:].strip()
     await on_add_product(message, data)
     logger.info(f"End command {message.text} with chat_id {message.chat.id}")
 
@@ -108,7 +108,7 @@ async def update_all_price_handler(message: types.Message):
 @dp.message_handler(lambda message: message.text.startswith("/update_one "))
 async def update_one_price_handler(message: types.Message):
     logger.info(f"Start command {message.text} with chat_id {message.chat.id}")
-    data = message.text[17:].strip()
+    data = message.text[12:].strip()
     await on_update_one_price(message, data)
     logger.info(f"End command {message.text} with chat_id {message.chat.id}")
 

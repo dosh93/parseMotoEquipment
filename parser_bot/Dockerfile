@@ -1,13 +1,16 @@
 # Dockerfile
 FROM python:3.10.4
 
-WORKDIR /parser_bot
+WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY ../common /app/common
+COPY . ./parser_bot
+
+ENV PYTHONPATH "${PYTHONPATH}:/parser_bot/common"
 
 EXPOSE 5001
 
-CMD ["python", "bot.py"]
+CMD ["python", "./parser_bot/bot.py"]

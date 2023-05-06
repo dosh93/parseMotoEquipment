@@ -1,13 +1,15 @@
 import logging
+import os
 from logging.handlers import TimedRotatingFileHandler
 import configparser
-import os
+
 
 def configure_logger(logger_name):
-
     config = configparser.ConfigParser()
-    config_file_path = os.path.join(os.path.dirname(__file__), '', 'config.ini')
-    config.read(config_file_path)
+    logger_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(logger_dir, "config.ini")
+
+    config.read(config_path)
 
     log_filename = config.get('logging', 'log_filename')
     interval = config.getint('logging', 'interval')

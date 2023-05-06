@@ -4,7 +4,7 @@ import os
 
 import requests
 
-from parsers_api.logger import configure_logger
+from common.logger import configure_logger
 
 logger = configure_logger(__name__)
 

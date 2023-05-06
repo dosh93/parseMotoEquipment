@@ -1,13 +1,16 @@
 # Dockerfile
 FROM python:3.10.4
 
-WORKDIR /parsers_api
+WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY ../common /app/common
+COPY . ./parsers_api
+
+ENV PYTHONPATH "${PYTHONPATH}:/app/common"
 
 EXPOSE 5002
 
-CMD ["python", "server.py"]
+CMD ["python", "./parsers_api/server.py"]

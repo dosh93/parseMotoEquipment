@@ -1,6 +1,6 @@
 import json
 
-from parsers_api.logger import configure_logger
+from common.logger import configure_logger
 from parsers_api.my_helper.helpers import get_price_rub
 from parsers_api.parsers.marti_motors.singleton import browser_handler
 from parsers_api.parsers.marti_motors.helper import accept_cookies, get_description, get_photos_link, get_color_name, get_spec, \

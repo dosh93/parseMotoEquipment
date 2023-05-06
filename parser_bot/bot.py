@@ -6,7 +6,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ParseMode
 from aiogram import executor
-from parser_bot.logger import configure_logger
+
+from common.logger import configure_logger
 
 logger = configure_logger(__name__)
 

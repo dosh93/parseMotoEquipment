@@ -2,7 +2,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 
-from logger import configure_logger
+from common.logger import configure_logger
 
 logger = configure_logger(__name__)
 

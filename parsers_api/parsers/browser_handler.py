@@ -3,7 +3,8 @@ import os
 
 from bs4 import BeautifulSoup
 from pyppeteer import launch
-from parsers_api.logger import configure_logger
+
+from common.logger import configure_logger
 
 logger = configure_logger(__name__)
 

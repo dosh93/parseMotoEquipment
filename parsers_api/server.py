@@ -1,7 +1,7 @@
 import configparser
 from quart import Quart, request
 
-from logger import configure_logger
+from common.logger import configure_logger
 from main import add_product_marti_motors, update_price_marti_motors
 
 

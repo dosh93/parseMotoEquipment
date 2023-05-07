@@ -1,3 +1,6 @@
+import logging
+
+from common.logger import configure_logger
 from db_conn.my_sql_connector import MySQLConnector
 from parsers.marti_motors.helper import get_variants, get_variant_with_price, get_media
 from parsers.marti_motors.marti_motors_parser import parse_by_url
@@ -8,6 +11,7 @@ api = WixAPI()
 db = MySQLConnector()
 db.create_table()
 
+logger = configure_logger(__name__)
 
 def is_duplicate(url):
     return len(db.get_data_where({"url": url})) != 0
@@ -38,13 +42,18 @@ async def update_price_marti_motors(id_product=None, url=None):
     count_update_product = 0
     for product in products:
         product_id = product[2]
-        item = await parse_by_url(product[1])
-        product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
-                                 get_variant_with_price(item), get_media(item))
-        api.reset_all_variant(product_id)
-        api.update_product(product_to_wix, product_id)
-        api.add_variants(product_id, product_to_wix.variantOptions)
-        api.delete_media(product_id)
-        api.add_media(product_id, product_to_wix.media)
-        count_update_product += 1
+        code = api.get_product(product_id).status_code
+        if code == 404:
+            logger.info(f"Product with id {product_id} not found in wix")
+            db.delete_by_id(product[0])
+        elif code == 200:
+            item = await parse_by_url(product[1])
+            product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
+                                     get_variant_with_price(item), get_media(item))
+            api.reset_all_variant(product_id)
+            api.update_product(product_to_wix, product_id)
+            api.add_variants(product_id, product_to_wix.variantOptions)
+            api.delete_media(product_id)
+            api.add_media(product_id, product_to_wix.media)
+            count_update_product += 1
     return count_update_product

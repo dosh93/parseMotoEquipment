@@ -38,6 +38,15 @@ class WixAPI:
             logger.error(f"Error occurred while sending PATCH request: {e}")
             return None
 
+    def __get(self, endpoint):
+        try:
+            response = requests.get(self.url + endpoint, headers=self.headers)
+            logger.info(f"GET request sent to {self.url + endpoint}")
+            return response
+        except Exception as e:
+            logger.error(f"Error occurred while sending GET request: {e}")
+            return None
+
     def add_product(self, product):
         logger.info(f"Adding product {product.product['product']['name']}")
         logger.debug(f"Product {product.product}")
@@ -106,6 +115,16 @@ class WixAPI:
             return result
         else:
             logger.warning(f"Reset all variants product with id {id_product} failed")
+            return None
+
+    def get_product(self, id_product):
+        logger.info(f"Get product with id {id_product}")
+        result = self.__get(f"/stores/v1/products/{id_product}")
+        if result is not None:
+            logger.info(f"Get product with id {id_product} successfully")
+            return result
+        else:
+            logger.warning(f"Get product with id {id_product} failed")
             return None
 
 

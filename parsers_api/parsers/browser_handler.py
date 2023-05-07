@@ -18,12 +18,20 @@ class BrowserHandler:
         config_file_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
         config.read(config_file_path)
 
+        self.browser_args = []
+        if 'browser' in config.sections():
+            if 'security_args' in config['browser']:
+                security_args = config['browser']['security_args'].split(',')
+                self.browser_args.extend(security_args)
+
         self.page_load_timeout = config.getint('browser', 'page_load_timeout')
         self.is_headless = config.getboolean('browser', 'is_headless')
 
     async def start_browser(self):
         try:
-            self.browser = await launch(headless=self.is_headless)
+            self.browser = await launch(
+                args=self.browser_args,
+                headless=self.is_headless)
             self.page = await self.browser.newPage()
             self.page.setDefaultNavigationTimeout(self.page_load_timeout)
             logger.info("Browser started successfully.")

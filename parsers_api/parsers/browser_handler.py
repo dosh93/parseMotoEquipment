@@ -19,10 +19,13 @@ class BrowserHandler:
         config.read(config_file_path)
 
         self.browser_args = []
+        self.executable_path = None
         if 'browser' in config.sections():
             if 'security_args' in config['browser']:
                 security_args = config['browser']['security_args'].split(',')
                 self.browser_args.extend(security_args)
+            if 'executable_path' in config['browser']:
+                self.executable_path = config['browser']['executable_path']
 
         self.page_load_timeout = config.getint('browser', 'page_load_timeout')
         self.is_headless = config.getboolean('browser', 'is_headless')
@@ -31,6 +34,7 @@ class BrowserHandler:
         try:
             self.browser = await launch(
                 args=self.browser_args,
+                executablePath=self.executable_path,
                 headless=self.is_headless)
             self.page = await self.browser.newPage()
             self.page.setDefaultNavigationTimeout(self.page_load_timeout)

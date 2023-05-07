@@ -42,6 +42,8 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     wget
 
+RUN apt-get update && apt-get install -y chromium
+
 WORKDIR /app
 
 COPY requirements.txt .

@@ -6,7 +6,7 @@ from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath,
 
 
 async def accept_cookies():
-    await browser_handler().wait_for_element(button_cooke_accept_xpath)
+    await browser_handler().wait_for_element(button_cooke_accept_xpath, timeout=10000)
     await browser_handler().click(button_cooke_accept_xpath)
 
 

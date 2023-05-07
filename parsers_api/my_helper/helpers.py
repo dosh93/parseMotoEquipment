@@ -21,4 +21,4 @@ async def retry_on_error(func, end_func, *args, max_retries=3, delay=1):
 
 
 def get_price_rub(price, currency):
-    return math.ceil(CurrencyRate.get_rate(currency) * price)
+    return math.ceil(CurrencyRate.get_rate(currency) * price * (1 + 15 / 100))

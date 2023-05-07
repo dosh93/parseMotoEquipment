@@ -19,6 +19,8 @@ services:
 
   service_update:
     build: ./service_update_price
+    volumes:
+      - /LOG/service_update_price:/app/logs
     networks:
       - app_network
 

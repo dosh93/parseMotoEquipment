@@ -1,3 +1,4 @@
+import asyncio
 import configparser
 import os
 
@@ -44,13 +45,17 @@ class BrowserHandler:
             return False
         return True
 
-    async def navigate_to(self, url):
+    async def navigate_to(self, url, wait_navigate=False):
         if self.page is None:
             logger.error("Browser is not started. Call 'start_browser()' first.")
             return False
 
         try:
-            await self.page.goto(url)
+            if wait_navigate:
+                await self.page.goto(url)
+            else:
+                await self.page.goto(url, {'waitUntil': 'domcontentloaded'})
+
             logger.debug(f"Successfully navigated to {url}.")
         except Exception as e:
             logger.error(f"Error navigating to {url}: {e}")
@@ -173,10 +178,6 @@ class BrowserHandler:
                 return False
             element = elements[0]
 
-            # Scroll to the top of the page and then scroll to the element with a given offset
-            await self.scroll_to_top()
-            await self.scroll_to_element(element, offset_y=offset_y)
-
             await element.click()
             logger.debug(f"Element with XPath '{xpath}' clicked successfully.")
         except Exception as e:
@@ -190,10 +191,6 @@ class BrowserHandler:
             return False
 
         try:
-            # Scroll to the top of the page and then scroll to the element with a given offset
-            await self.scroll_to_top()
-            await self.scroll_to_element(element, offset_y=offset_y)
-
             await element.click()
             logger.debug("Element clicked successfully.")
         except Exception as e:
@@ -340,3 +337,39 @@ class BrowserHandler:
         except Exception as e:
             logger.error(f"Error getting attributes '{attribute_name}' for elements '{xpath}': {e}")
             return None
+
+    async def remove_element_by_xpath(self, xpath):
+        try:
+            elements = await self.get_elements_by_xpath(xpath)
+            await self.page.evaluate('''(element) => element.remove()''', elements[0])
+
+            logger.info(f"Element removed with xpath: {xpath}")
+        except Exception as e:
+            logger.error(f"Error remove element with xpath {xpath}: {e}")
+
+    async def element_exists_by_xpath(self, xpath):
+        elements = await self.page.xpath(xpath)
+        if not elements:
+            logger.debug(f"Element not found by XPath: {xpath}")
+            return False
+        logger.debug(f"Element found by XPath: {xpath}")
+        return True
+
+    async def is_element_visible_by_xpath(self, xpath):
+        elements = await self.page.xpath(xpath)
+
+        if not elements:
+            logger.error(f"Element not found by XPath: {xpath}")
+            return False
+
+        element = elements[0]
+        is_visible = await self.page.evaluate('''(element) => {
+            return element.offsetWidth > 0 && element.offsetHeight > 0
+        }''', element)
+
+        if is_visible:
+            logger.debug(f"Element is visible by XPath: {xpath}")
+        else:
+            logger.debug(f"Element is not visible by XPath: {xpath}")
+
+        return is_visible

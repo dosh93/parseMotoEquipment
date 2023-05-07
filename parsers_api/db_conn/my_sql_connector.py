@@ -92,3 +92,16 @@ class MySQLConnector:
             rows = []
         self.close()
         return rows
+
+    def delete_by_id(self, id):
+        self.connect()
+        try:
+            query = "DELETE FROM products WHERE id = %s"
+            values = (id,)
+            self.cursor.execute(query, values)
+            self.conn.commit()
+            logger.info("Data deleted: id=%s", id)
+        except mysql.connector.Error as e:
+            logger.error("Error deleting data by ID: %s", e)
+        self.close()
+

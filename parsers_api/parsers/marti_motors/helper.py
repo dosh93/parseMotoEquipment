@@ -1,17 +1,20 @@
 import re
-from parsers_api.parsers.marti_motors.singleton import browser_handler
 
-from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, product_descriptions_xpath, \
-    link_photo_xpath, child_element_color_xpath, photos_slider_xpath, input_count_xpath, button_add_xpath
+from parsers_api.my_helper.helpers import get_price_rub
 
-
-async def accept_cookies():
-    await browser_handler().wait_for_element(button_cooke_accept_xpath, timeout=10000)
-    await browser_handler().click(button_cooke_accept_xpath)
+from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, \
+    product_descriptions_xpath, \
+    link_photo_xpath, child_element_color_xpath, photos_slider_xpath, input_count_xpath, button_add_xpath, colors_xpath, \
+    price_xpath, sizes_xpath, promo_checkbox_xpath
 
 
-async def get_spec():
-    soup = await browser_handler().get_soup()
+async def accept_cookies(browser_handler_instance):
+    await browser_handler_instance.wait_for_element(button_cooke_accept_xpath, timeout=10000)
+    await browser_handler_instance.click(button_cooke_accept_xpath)
+
+
+async def get_spec(browser_handler_instance):
+    soup = await browser_handler_instance.get_soup()
     rows = soup.find(id=id_table_spec).find_all('tr')
     specification = {}
     for row in rows:
@@ -23,39 +26,47 @@ async def get_spec():
     return specification
 
 
-async def get_description():
-    return await browser_handler().get_element_text(product_descriptions_xpath)
+async def get_description(spec, browser_handler_instance):
+    description_text = await browser_handler_instance.get_element_text(product_descriptions_xpath)
+    description_text += "\n"
+    if len(spec) > 0:
+        description_text += "<ul>"
+    for key, value in spec.items():
+        description_text += f"<li><strong>{key}</strong> - {value}</li>\n"
+    if len(spec) > 0:
+        description_text += "</ul>"
+    return description_text
 
 
-async def get_photos_link():
-    return await browser_handler().get_attributes_by_xpath(link_photo_xpath, "href")
+async def get_photos_link(browser_handler_instance):
+    return await browser_handler_instance.get_attributes_by_xpath(link_photo_xpath, "href")
 
 
-async def get_color_name(color_element):
+async def get_color_name(color_element, browser_handler_instance):
     pattern = r'\bModelo(?:\s+\d+)?\s*'
     child_element = await color_element.xpath(child_element_color_xpath)
-    color_name = await browser_handler().get_text_for_element(child_element[0])
+    color_name = await browser_handler_instance.get_text_for_element(child_element[0])
     result = re.sub(pattern, '', color_name)
     return result
 
 
-async def get_count_active_photo():
-    swiper_sliders = await browser_handler().get_elements_by_xpath(photos_slider_xpath)
+async def get_count_active_photo(browser_handler_instance):
+    swiper_sliders = await browser_handler_instance.get_elements_by_xpath(photos_slider_xpath)
     for index, swiper_slider in enumerate(swiper_sliders):
-        name_class = await browser_handler().get_attribute_by_element(swiper_slider, "className")
+        name_class = await browser_handler_instance.get_attribute_by_element(swiper_slider, "className")
         if "active" in name_class:
             return index
 
 
-async def get_count():
-    input_count = await browser_handler().get_elements_by_xpath(input_count_xpath)
-    start_count = await browser_handler().get_attribute_by_element(input_count[0], "value")
+async def get_count(browser_handler_instance):
+    input_count = await browser_handler_instance.get_elements_by_xpath(input_count_xpath)
+    start_count = await browser_handler_instance.get_attribute_by_element(input_count[0], "value")
 
     while True:
-        button_add = await browser_handler().get_elements_by_xpath(button_add_xpath)
-        await browser_handler().click_for_element(button_add[0])
-        input_count = await browser_handler().get_elements_by_xpath(input_count_xpath)
-        current_count = await browser_handler().get_attribute_by_element(input_count[0], "value")
+        button_add = await browser_handler_instance.get_elements_by_xpath(button_add_xpath)
+        await browser_handler_instance.click_for_element(button_add[0])
+        input_count = await browser_handler_instance.get_elements_by_xpath(input_count_xpath)
+        current_count = await browser_handler_instance.get_attribute_by_element(input_count[0], "value")
 
         if current_count == start_count:
             return current_count
@@ -154,3 +165,26 @@ def get_media(item):
             })
     media = {"media": media_arr}
     return media
+
+
+async def wait_load_page(browser_handler_instance):
+    await browser_handler_instance.wait_for_element(colors_xpath)
+    await browser_handler_instance.wait_for_element(sizes_xpath)
+    await browser_handler_instance.wait_for_element(price_xpath)
+
+
+async def is_promo_checked(browser_handler_instance):
+    class_name = await browser_handler_instance.get_attribute_by_xpath(promo_checkbox_xpath, "className")
+    if class_name == "checked":
+        return True
+    else:
+        return False
+
+
+async def get_price_on_page(browser_handler_instance):
+    price_elements = await browser_handler_instance.get_elements_by_xpath(price_xpath)
+    price_not_prepare = await browser_handler_instance.get_text_for_element(price_elements[0])
+    current_price = float(
+        price_not_prepare.replace(" \u20ac", "").replace(",", ".").strip()
+    )
+    return get_price_rub(current_price, "EUR")

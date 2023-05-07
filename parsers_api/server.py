@@ -4,8 +4,7 @@ import os
 from quart import Quart, request
 
 from common.logger import configure_logger
-from main import add_product_marti_motors, update_price_marti_motors
-
+from main import add_product_marti_motors, update_price_marti_motors, is_duplicate
 
 app = Quart(__name__)
 
@@ -21,9 +20,12 @@ host = config.get('flask_app', 'host', fallback='0.0.0.0')
 port = config.getint('flask_app', 'port', fallback=8080)
 
 
+
 @app.route('/add_product', methods=['GET'])
 async def add_product():
     url = request.args.get('url', None)
+    if is_duplicate(url):
+        return f"Такой товар уже есть", 409
     if url:
         result = await add_product_marti_motors(url)
         app.logger.info(f'Product with URL "{url}" successfully added')

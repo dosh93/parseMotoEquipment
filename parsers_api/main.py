@@ -9,6 +9,10 @@ db = MySQLConnector()
 db.create_table()
 
 
+def is_duplicate(url):
+    return len(db.get_data_where({"url": url})) != 0
+
+
 async def add_product_marti_motors(url):
     item = await parse_by_url(url)
 

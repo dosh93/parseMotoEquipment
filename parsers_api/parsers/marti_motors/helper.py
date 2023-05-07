@@ -1,8 +1,12 @@
 import re
+
+from parsers_api.my_helper.helpers import get_price_rub
 from parsers_api.parsers.marti_motors.singleton import browser_handler
 
-from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, product_descriptions_xpath, \
-    link_photo_xpath, child_element_color_xpath, photos_slider_xpath, input_count_xpath, button_add_xpath
+from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, \
+    product_descriptions_xpath, \
+    link_photo_xpath, child_element_color_xpath, photos_slider_xpath, input_count_xpath, button_add_xpath, colors_xpath, \
+    price_xpath, sizes_xpath, promo_checkbox_xpath
 
 
 async def accept_cookies():
@@ -154,3 +158,26 @@ def get_media(item):
             })
     media = {"media": media_arr}
     return media
+
+
+async def wait_load_page():
+    await browser_handler().wait_for_element(colors_xpath)
+    await browser_handler().wait_for_element(sizes_xpath)
+    await browser_handler().wait_for_element(price_xpath)
+
+
+async def is_promo_checked():
+    class_name = await browser_handler().get_attribute_by_xpath(promo_checkbox_xpath, "className")
+    if class_name == "checked":
+        return True
+    else:
+        return False
+
+
+async def get_price_on_page():
+    price_elements = await browser_handler().get_elements_by_xpath(price_xpath)
+    price_not_prepare = await browser_handler().get_text_for_element(price_elements[0])
+    current_price = float(
+        price_not_prepare.replace(" \u20ac", "").replace(",", ".").strip()
+    )
+    return get_price_rub(current_price, "EUR")

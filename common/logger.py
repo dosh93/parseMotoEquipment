@@ -33,7 +33,6 @@ def configure_logger(logger_name):
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.getLevelName(log_level))
         console_handler.setFormatter(formatter)
-        console_handler.stream.encoding = 'utf-8'
         logger.addHandler(console_handler)
 
     return logger

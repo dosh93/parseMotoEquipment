@@ -24,8 +24,8 @@ async def parse_by_url(url):
     soup = await browser_handler().get_soup()
     current_price = float(soup.find(id=id_price).get_text().replace(" \u20ac", "").replace(",", ".").strip())
     item = {"name": await browser_handler().get_element_text(name_xpath), "base_url": url,
-            "specification": await get_spec(),
-            "description": await get_description(), "price": [], "photos": await get_photos_link(), "photoByColor": []}
+            "specification": await get_spec(), "price": [], "photos": await get_photos_link(), "photoByColor": []}
+    item["description"] = await get_description(item["specification"])
 
     colors = await browser_handler().get_elements_by_xpath(colors_xpath)
 

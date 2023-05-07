@@ -27,8 +27,16 @@ async def get_spec():
     return specification
 
 
-async def get_description():
-    return await browser_handler().get_element_text(product_descriptions_xpath)
+async def get_description(spec):
+    description_text = await browser_handler().get_element_text(product_descriptions_xpath)
+    description_text += "\n"
+    if len(spec) > 0:
+        description_text += "<ul>"
+    for key, value in spec.items():
+        description_text += f"<li><strong>{key}</strong> - {value}</li>\n"
+    if len(spec) > 0:
+        description_text += "</ul>"
+    return description_text
 
 
 async def get_photos_link():

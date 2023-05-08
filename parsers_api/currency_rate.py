@@ -29,6 +29,8 @@ class CurrencyRate:
             cls._fetch_data()
 
         if valute_name in cls._data["Valute"]:
-            return float(cls._data["Valute"][valute_name]["Value"]) + 2
+            current_rate = float(cls._data["Valute"][valute_name]["Value"]) + 2
+            logger.info(f"Current rate = {current_rate}")
+            return current_rate
         else:
             logger.error(f"Валюта '{valute_name}' не найдена")

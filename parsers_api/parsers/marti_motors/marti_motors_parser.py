@@ -23,7 +23,7 @@ async def parse_by_url(url):
         await wait_load_page(browser_handler_instance)
         await browser_handler_instance.remove_element_by_xpath(header_xpath)
         soup = await browser_handler_instance.get_soup()
-        current_price = float(soup.find(id=id_price).get_text().replace(" \u20ac", "").replace(",", ".").strip())
+        #current_price = float(soup.find(id=id_price).get_text().replace(" \u20ac", "").replace(",", ".").strip())
         item = {"name": await browser_handler_instance.get_element_text(name_xpath), "base_url": url,
                 "specification": await get_spec(browser_handler_instance), "price": [],
                 "photos": await get_photos_link(browser_handler_instance), "photoByColor": []}

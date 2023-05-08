@@ -13,6 +13,7 @@ db.create_table()
 
 logger = configure_logger(__name__)
 
+
 def is_duplicate(url):
     return len(db.get_data_where({"url": url})) != 0
 

@@ -8,7 +8,7 @@ from parsers_api.parsers.marti_motors.helper import accept_cookies, get_descript
     get_count_active_photo, map_photo_to_color, wait_load_page, is_promo_checked, get_price_on_page
 from parsers_api.parsers.marti_motors.locators import colors_xpath, name_xpath, sizes_xpath, input_size_xpath, id_price, \
     id_sku, \
-    class_sku, header_xpath, promo_xpath, price_xpath
+    class_sku, header_xpath, promo_xpath, price_xpath, cooke_accept_banner_xpath
 
 logger = configure_logger(__name__)
 
@@ -19,7 +19,6 @@ async def parse_by_url(url):
     await browser_handler_instance.start_browser()
     await browser_handler_instance.navigate_to(url)
     await wait_load_page(browser_handler_instance)
-    await accept_cookies(browser_handler_instance)
     await browser_handler_instance.remove_element_by_xpath(header_xpath)
     soup = await browser_handler_instance.get_soup()
     current_price = float(soup.find(id=id_price).get_text().replace(" \u20ac", "").replace(",", ".").strip())
@@ -31,6 +30,9 @@ async def parse_by_url(url):
     colors = await browser_handler_instance.get_elements_by_xpath(colors_xpath)
 
     for color in colors:
+        if await browser_handler_instance.element_exists_by_xpath(cooke_accept_banner_xpath):
+            await browser_handler_instance.remove_element_by_xpath(cooke_accept_banner_xpath)
+
         color_name = await get_color_name(color, browser_handler_instance)
         logger.info(f"Parse color {color_name}")
         await browser_handler_instance.click_for_element(color)

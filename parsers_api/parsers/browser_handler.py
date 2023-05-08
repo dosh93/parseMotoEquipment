@@ -359,7 +359,7 @@ class BrowserHandler:
         elements = await self.page.xpath(xpath)
 
         if not elements:
-            logger.error(f"Element not found by XPath: {xpath}")
+            logger.debug(f"Element not found by XPath: {xpath}")
             return False
 
         element = elements[0]

@@ -14,4 +14,4 @@ ENV PYTHONPATH "${PYTHONPATH}:/parser_bot/common"
 
 EXPOSE 5001
 
-CMD ["python", "./parser_bot/bot.py"]
+CMD ["python", "./parser_bot/new_bot.py"]

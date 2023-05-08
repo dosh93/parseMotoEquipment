@@ -1,5 +1,6 @@
 import asyncio
 import configparser
+import os
 from typing import List
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -14,7 +15,10 @@ from common.logger import configure_logger
 logger = configure_logger(__name__)
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(current_dir, "config.ini")
+
+config.read(config_path)
 
 BOT_TOKEN = config.get("bot", "token")
 ALLOWED_CHAT_IDS = [int(chat_id.strip()) for chat_id in config.get("bot", "allowed_chat_ids").split(",")]

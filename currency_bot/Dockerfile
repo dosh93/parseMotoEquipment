@@ -16,4 +16,4 @@ ENV PYTHONPATH "${PYTHONPATH}:/currency_bot/common"
 
 EXPOSE 5001
 
-CMD ["python", "./currency_bot/nbot.py"]
+CMD ["python", "./currency_bot/bot.py"]

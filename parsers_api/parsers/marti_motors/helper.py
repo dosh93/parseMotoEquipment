@@ -156,15 +156,22 @@ def get_variant_with_price(item):
 
 def get_media(item):
     media_arr = []
-    for photoByColor in item["photoByColor"]:
-        for photo in photoByColor["photos"]:
+    if len(item["photos"]) > 15:
+        photos = item["photos"][:15]
+        for photo in photos:
             media_arr.append({
-                "url": photo,
-                "choice": {
-                    "option": "Цвет",
-                    "choice": photoByColor["color"]
-                }
+                "url": photo
             })
+    else:
+        for photoByColor in item["photoByColor"]:
+            for photo in photoByColor["photos"]:
+                media_arr.append({
+                    "url": photo,
+                    "choice": {
+                        "option": "Цвет",
+                        "choice": photoByColor["color"]
+                    }
+                })
     media = {"media": media_arr}
     return media
 

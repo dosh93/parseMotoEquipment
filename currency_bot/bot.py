@@ -25,7 +25,7 @@ NOTIFICATION_TIME = config.get('bot', 'notification_time')
 DB_HOST = config.get('database', 'host')
 DB_USER = config.get('database', 'user')
 DB_PASSWORD = config.get('database', 'password')
-DB_NAME = config.get('database', 'db_name')
+DB_NAME = config.get('database', 'database')
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)

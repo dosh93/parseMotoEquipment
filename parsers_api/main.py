@@ -39,7 +39,7 @@ async def update_price_marti_motors(id_product=None, url=None):
         products = db.get_data_where({"url": url})
     else:
         products = db.get_data_where({"name_site": "martimotos"})
-
+    logger.info(f"Product {products}")
     count_update_product = 0
     for product in products:
         product_id = product[2]

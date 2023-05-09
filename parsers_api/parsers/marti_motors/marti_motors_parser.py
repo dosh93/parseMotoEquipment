@@ -23,7 +23,6 @@ async def parse_by_url(url):
         await wait_load_page(browser_handler_instance)
         await browser_handler_instance.remove_element_by_xpath(header_xpath)
         soup = await browser_handler_instance.get_soup()
-        #current_price = float(soup.find(id=id_price).get_text().replace(" \u20ac", "").replace(",", ".").strip())
         item = {"name": await browser_handler_instance.get_element_text(name_xpath), "base_url": url,
                 "specification": await get_spec(browser_handler_instance), "price": [],
                 "photos": await get_photos_link(browser_handler_instance), "photoByColor": []}
@@ -73,7 +72,6 @@ async def parse_by_url(url):
         item["one_price"] = await get_price_on_page(browser_handler_instance)
         map_photo_to_color(item)
         logger.info(f"Done parse {url}\n{json.dumps(item, indent=2)}")
-        await browser_handler_instance.close_browser()
         return item
     except Exception as e:
         logger.error(f"Error parsing {e}")

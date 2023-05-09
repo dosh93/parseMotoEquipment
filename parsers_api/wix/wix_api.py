@@ -24,6 +24,7 @@ class WixAPI:
         try:
             response = requests.post(self.url + endpoint, json=data, headers=self.headers)
             logger.info(f"POST request sent to {self.url + endpoint}")
+            logger.debug(f"POST response: {response.status_code} {response.content} ")
             return json.loads(response.content)
         except Exception as e:
             logger.error(f"Error occurred while sending POST request: {e}")
@@ -33,6 +34,7 @@ class WixAPI:
         try:
             response = requests.patch(self.url + endpoint, json=data, headers=self.headers)
             logger.info(f"PATCH request sent to {self.url + endpoint}")
+            logger.debug(f"PATCH response: {response.status_code} {response.content} ")
             return json.loads(response.content)
         except Exception as e:
             logger.error(f"Error occurred while sending PATCH request: {e}")
@@ -42,6 +44,7 @@ class WixAPI:
         try:
             response = requests.get(self.url + endpoint, headers=self.headers)
             logger.info(f"GET request sent to {self.url + endpoint}")
+            logger.debug(f"GET response: {response.status_code} {response.content} ")
             return response
         except Exception as e:
             logger.error(f"Error occurred while sending GET request: {e}")

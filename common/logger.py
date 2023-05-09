@@ -21,7 +21,8 @@ def configure_logger(logger_name):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.getLevelName(log_level))
 
-    file_handler = TimedRotatingFileHandler(log_filename, when='midnight', interval=interval, backupCount=backup_count)
+    file_handler = TimedRotatingFileHandler(log_filename, when='midnight', interval=interval, backupCount=backup_count,
+                                            encoding='utf-8')
     file_handler.setLevel(logging.getLevelName(log_level))
 
     formatter = logging.Formatter(f'{log_format} - [%(filename)s:%(lineno)d]')

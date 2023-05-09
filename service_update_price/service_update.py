@@ -25,7 +25,7 @@ def call_url(url):
     try:
         response = requests.get(url)
         response.raise_for_status()
-        logger.info(f'URL called successfully: {url}. Results: ${response.content}')
+        logger.info(f'URL called successfully: {url}. Results: {response.content.decode("utf-8")}')
     except requests.exceptions.RequestException as e:
         logger.error(f'Error calling URL: {e}')
 

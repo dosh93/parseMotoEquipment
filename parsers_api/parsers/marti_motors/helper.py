@@ -43,10 +43,12 @@ async def get_photos_link(browser_handler_instance):
 
 
 async def get_color_name(color_element, browser_handler_instance):
-    pattern = r'\bModelo(?:\s+\d+)?\s*'
+    pattern_modelo = r'\bModelo(?:\s+\d+)?\s*'
+    pattern_non_alnum = r'^\W'
     child_element = await color_element.xpath(child_element_color_xpath)
     color_name = await browser_handler_instance.get_text_for_element(child_element[0])
-    result = re.sub(pattern, '', color_name)
+    result = re.sub(pattern_modelo, '', color_name)
+    result = re.sub(pattern_non_alnum, '', result)
     return result
 
 

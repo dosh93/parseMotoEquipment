@@ -190,10 +190,10 @@ async def is_promo_checked(browser_handler_instance):
         return False
 
 
-async def get_price_on_page(browser_handler_instance):
+async def get_price_on_page(browser_handler_instance, rate):
     price_elements = await browser_handler_instance.get_elements_by_xpath(price_xpath)
     price_not_prepare = await browser_handler_instance.get_text_for_element(price_elements[0])
     current_price = float(
         price_not_prepare.replace(" \u20ac", "").replace(",", ".").replace(" ", "").strip()
     )
-    return get_price_rub(current_price, "EUR")
+    return get_price_rub(current_price, rate)

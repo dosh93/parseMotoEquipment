@@ -3,6 +3,8 @@ version: '3.8'
 services:
   parser_api:
     build: ./parsers_api
+    environment:
+      - TZ=Europe/Moscow
     ports:
       - "8080:8080"
     volumes:
@@ -12,6 +14,8 @@ services:
 
   parser_bot:
     build: ./parser_bot
+    environment:
+      - TZ=Europe/Moscow
     volumes:
       - /LOG/parser_bot:/app/logs
     networks:
@@ -19,8 +23,19 @@ services:
 
   service_update:
     build: ./service_update_price
+    environment:
+      - TZ=Europe/Moscow
     volumes:
       - /LOG/service_update_price:/app/logs
+    networks:
+      - app_network
+
+  currency_bot:
+    build: ./currency_bot
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - /LOG/currency_bot:/app/logs
     networks:
       - app_network
 

@@ -4,6 +4,7 @@ from common.logger import configure_logger
 from db_conn.my_sql_connector import MySQLConnector
 from parsers.marti_motors.helper import get_variants, get_variant_with_price, get_media
 from parsers.marti_motors.marti_motors_parser import parse_by_url
+from parsers_api.currency_rate import CurrencyRate
 from wix.site_items import WixItem
 from wix.wix_api import WixAPI
 
@@ -19,7 +20,8 @@ def is_duplicate(url):
 
 
 async def add_product_marti_motors(url):
-    item = await parse_by_url(url)
+    rate = CurrencyRate.get_rate_db()
+    item = await parse_by_url(url, rate)
 
     product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                              get_variant_with_price(item), get_media(item))
@@ -33,6 +35,7 @@ async def add_product_marti_motors(url):
 
 
 async def update_price_marti_motors(id_product=None, url=None):
+    rate = CurrencyRate.get_rate_db()
     if id_product is not None:
         products = db.get_data_where({"id_product": id_product})
     elif url is not None:
@@ -48,7 +51,7 @@ async def update_price_marti_motors(id_product=None, url=None):
             logger.info(f"Product with id {product_id} not found in wix")
             db.delete_by_id(product[0])
         elif code == 200:
-            item = await parse_by_url(product[1])
+            item = await parse_by_url(product[1], rate)
             product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                                      get_variant_with_price(item), get_media(item))
             api.reset_all_variant(product_id)

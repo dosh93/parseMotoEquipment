@@ -1,8 +1,6 @@
 import asyncio
 import math
 
-from parsers_api.currency_rate import CurrencyRate
-
 
 async def retry_on_error(func, end_func, *args, max_retries=3, delay=1):
     retries = 0
@@ -20,5 +18,5 @@ async def retry_on_error(func, end_func, *args, max_retries=3, delay=1):
     raise Exception("Превышено максимальное число попыток.")
 
 
-def get_price_rub(price, currency):
-    return math.ceil(CurrencyRate.get_rate(currency) * price * (1 + 15 / 100))
+def get_price_rub(price, rate):
+    return math.ceil(rate * price * (1 + 15 / 100))

@@ -10,10 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir /app/logs
 COPY ./common /app/common
-COPY . ./service_update_price
+COPY . ./currency_bot
 
-ENV PYTHONPATH "${PYTHONPATH}:/app/common"
+ENV PYTHONPATH "${PYTHONPATH}:/currency_bot/common"
 
-EXPOSE 5003
+EXPOSE 5001
 
-CMD ["python", "./service_update_price/service_update.py"]
+CMD ["python", "./currency_bot/nbot.py"]

@@ -51,9 +51,18 @@ class MySQLConnector:
                 )
             ''')
             logger.info("Table 'products' created or already exists")
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS euro_rates (
+                    id INT PRIMARY KEY,
+                    rate FLOAT NOT NULL,
+                    timestamp DATETIME NOT NULL
+                )    
+            ''')
+            logger.info("Table 'euro_rates' created or already exists")
         except mysql.connector.Error as e:
             logger.error("Error creating table 'products': %s", e)
-        self.close()
+        finally:
+            self.close()
 
     def save_data(self, url, id_product, name_site):
         self.connect()
@@ -65,7 +74,8 @@ class MySQLConnector:
             logger.info("Data saved: url=%s, id_product=%s, name_site=%s", url, id_product, name_site)
         except mysql.connector.Error as e:
             logger.error("Error saving data: %s", e)
-        self.close()
+        finally:
+            self.close()
 
     def get_data_where(self, where_conditions=None):
         self.connect()
@@ -87,11 +97,13 @@ class MySQLConnector:
             logger.info(f"query = {query}")
             rows = self.cursor.fetchall()
             logger.info("Data fetched with WHERE clause: %d rows", len(rows))
+            return rows
         except mysql.connector.Error as e:
             logger.error("Error fetching data with WHERE clause: %s", e)
             rows = []
-        self.close()
-        return rows
+        finally:
+            self.close()
+
 
     def delete_by_id(self, id):
         self.connect()
@@ -105,3 +117,19 @@ class MySQLConnector:
             logger.error("Error deleting data by ID: %s", e)
         self.close()
 
+    def get_currency_rate(self):
+        self.connect()
+        try:
+            query = "SELECT rate FROM euro_rates ORDER BY timestamp DESC LIMIT 1"
+            self.cursor.execute(query)
+            rows = self.cursor.fetchone()
+            if rows is not None:
+                logger.info(f"Get rate: {rows[0]}")
+                return rows[0]
+            else:
+                logger.warn(f"Rate euro table is empty")
+            return None
+        except mysql.connector.Error as e:
+            logger.error(f"Error getting rate {e}")
+        finally:
+            self.close()

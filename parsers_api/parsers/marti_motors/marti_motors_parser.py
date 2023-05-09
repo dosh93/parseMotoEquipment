@@ -2,6 +2,7 @@ import json
 from asyncio import sleep
 
 from common.logger import configure_logger
+from parsers_api.currency_rate import CurrencyRate
 from parsers_api.parsers.browser_handler import BrowserHandler
 from parsers_api.parsers.marti_motors.helper import accept_cookies, get_description, get_photos_link, get_color_name, \
     get_spec, \
@@ -13,7 +14,7 @@ from parsers_api.parsers.marti_motors.locators import colors_xpath, name_xpath, 
 logger = configure_logger(__name__)
 
 
-async def parse_by_url(url):
+async def parse_by_url(url, rate):
     browser_handler_instance = None
     try:
         browser_handler_instance = BrowserHandler()
@@ -58,7 +59,7 @@ async def parse_by_url(url):
                         await browser_handler_instance.click(promo_xpath)
                         await sleep(0.2)
 
-                    price['price'] = await get_price_on_page(browser_handler_instance)
+                    price['price'] = await get_price_on_page(browser_handler_instance, rate)
                     price['isExist'] = True
                     # price['count'] = await get_count()
                     soup = await browser_handler_instance.get_soup()
@@ -69,7 +70,7 @@ async def parse_by_url(url):
                 price['size_name'] = size_name.strip()
                 item["price"].append(price)
 
-        item["one_price"] = await get_price_on_page(browser_handler_instance)
+        item["one_price"] = await get_price_on_page(browser_handler_instance, rate)
         map_photo_to_color(item)
         logger.info(f"Done parse {url}\n{json.dumps(item, indent=2)}")
         return item

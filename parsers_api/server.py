@@ -28,18 +28,18 @@ async def add_product():
         return f"Такой товар уже есть", 409
     if url:
         result = await add_product_marti_motors(url)
-        app.logger.info(f'Product with URL "{url}" successfully added')
+        logger.info(f'Product with URL "{url}" successfully added')
         product_url = result['productPageUrl']["base"] + result['productPageUrl']["path"]
         return f"Добавлен продукт. Вот ссылка {product_url}", 200
     else:
-        app.logger.error('URL parameter not provided')
+        logger.error('URL parameter not provided')
         return 'URL parameter not provided', 400
 
 
 @app.route('/update_prices', methods=['GET'])
 async def update_prices():
     result = await update_price_marti_motors()
-    app.logger.debug('Prices of all products successfully updated')
+    logger.debug('Prices of all products successfully updated')
     return f"Обновлено продуктов: {result}", 200
 
 
@@ -50,14 +50,14 @@ async def update_price():
 
     if url:
         result = await update_price_marti_motors(url=url)
-        app.logger.info(f'Price of the product with URL "{url}" successfully updated')
+        logger.info(f'Price of the product with URL "{url}" successfully updated')
         return f'Обновлено продуктов: {result}', 200
     elif id_product:
         result = await update_price_marti_motors(id_product=id_product)
-        app.logger.info(f'Price of the product with ID {id_product} successfully updated')
+        logger.info(f'Price of the product with ID {id_product} successfully updated')
         return f'Обновлено продуктов: {result}', 200
     else:
-        app.logger.error('URL or ID parameters not provided')
+        logger.error('URL or ID parameters not provided')
         return 'URL or ID parameters not provided', 400
 
 

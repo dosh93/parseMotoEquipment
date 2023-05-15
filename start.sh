@@ -1,13 +1,25 @@
 #!/bin/bash
-mkdir -p ./parser_bot/common/
-mkdir -p ./parsers_api/common/
-mkdir -p ./service_update_price/common/
-mkdir -p ./currency_bot/common/
-cp -r ./common/* ./parser_bot/common/
-cp -r ./common/* ./parsers_api/common/
-cp -r ./common/* ./service_update_price/common/
-cp -r ./common/* ./currency_bot/common/
 
-docker-compose down
-docker-compose build
-docker-compose up -d
+SERVICES=("parser_bot" "parsers_api" "service_update_price" "currency_bot")
+
+if [ -z "$1" ]
+then
+  for SERVICE in "${SERVICES[@]}"
+  do
+    mkdir -p ./$SERVICE/common/
+    cp -r ./common/* ./$SERVICE/common/
+  done
+  docker-compose down
+  docker-compose build
+  docker-compose up -d
+else
+  if [[ " ${SERVICES[@]} " =~ " ${1} " ]]; then
+    mkdir -p ./$1/common/
+    cp -r ./common/* ./$1/common/
+    docker-compose down $1
+    docker-compose build $1
+    docker-compose up -d $1
+  else
+    echo "Invalid service name. Please provide one of the following: ${SERVICES[@]}"
+  fi
+fi

@@ -1,7 +1,8 @@
 version: '3.8'
 
 services:
-  parser_api:
+  parsers_api:
+    container_name: parsers_api
     build: ./parsers_api
     environment:
       - TZ=Europe/Moscow
@@ -13,6 +14,7 @@ services:
       - app_network
 
   parser_bot:
+    container_name: parser_bot
     build: ./parser_bot
     environment:
       - TZ=Europe/Moscow
@@ -21,7 +23,8 @@ services:
     networks:
       - app_network
 
-  service_update:
+  service_update_price:
+    container_name: service_update_price
     build: ./service_update_price
     environment:
       - TZ=Europe/Moscow
@@ -31,6 +34,7 @@ services:
       - app_network
 
   currency_bot:
+    container_name: currency_bot
     build: ./currency_bot
     environment:
       - TZ=Europe/Moscow

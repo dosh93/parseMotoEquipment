@@ -8,7 +8,7 @@ class WixItem:
                 "priceData": {
                     "price": price
                 },
-                "description": description,
+                "description": description[:8000],
                 "sku": "",
                 "visible": True,
                 "manageVariants": True,

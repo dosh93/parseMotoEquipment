@@ -56,7 +56,7 @@ def check_logs():
             logger.info(f'Checked log file: {log_path}')
 
 
-schedule.every().minute.do(check_logs)
+schedule.every().hour.do(check_logs)
 logger.info(f'Starting')
 while True:
     schedule.run_pending()

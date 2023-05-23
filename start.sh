@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SERVICES=("parser_bot" "parsers_api" "service_update_price" "currency_bot", "sender_bot", "log_monitoring")
+SERVICES=("parser_bot" "parsers_api" "service_update_price" "currency_bot" "sender_bot" "log_monitoring")
 
 if [ -z "$1" ]
 then

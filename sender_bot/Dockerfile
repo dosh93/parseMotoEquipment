@@ -10,10 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir /app/logs
 COPY ./common /app/common
-COPY . ./parser_bot
+COPY . ./sender_bot
 
-ENV PYTHONPATH "${PYTHONPATH}:/parser_bot/common"
+ENV PYTHONPATH "${PYTHONPATH}:/sender_bot/common"
 
-EXPOSE 5004
+EXPOSE 5005
 
-CMD ["python", "./parser_bot/new_bot.py"]
+CMD ["python", "./sender_bot/bot.py"]

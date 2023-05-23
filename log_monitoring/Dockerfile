@@ -10,10 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir /app/logs
 COPY ./common /app/common
-COPY . ./parser_bot
+COPY . ./log_monitoring
 
-ENV PYTHONPATH "${PYTHONPATH}:/parser_bot/common"
+ENV PYTHONPATH "${PYTHONPATH}:/log_monitoring/common"
 
-EXPOSE 5004
+EXPOSE 5006
 
-CMD ["python", "./parser_bot/new_bot.py"]
+CMD ["python", "./log_monitoring/service.py"]

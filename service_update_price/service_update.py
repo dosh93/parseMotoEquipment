@@ -16,18 +16,24 @@ def read_config():
     config_path = os.path.join(current_dir, "config.ini")
     config.read(config_path)
     url = config.get('URL', 'url_to_call')
+    url_send_message = config.get('URL', 'url_to_send_message')
     interval = config.getint('URL', 'interval')
     start_time = config.get('URL', 'start_time')
-    return url, interval, start_time
+    return url, interval, start_time, url_send_message
 
 
-def call_url(url):
+def call_url(url, url_send_message):
+    message = ""
     try:
         response = requests.get(url)
         response.raise_for_status()
-        logger.info(f'URL called successfully: {url}. Results: {response.content.decode("utf-8")}')
+        message = f'URL called successfully: {url}. Results: {response.content.decode("utf-8")}'
+        logger.info(message)
     except requests.exceptions.RequestException as e:
-        logger.error(f'Error calling URL: {e}')
+        message = f'Error calling URL: {e}'
+        logger.error(message)
+    finally:
+        requests.get(url_send_message, params={'text': message, 'service_name': 'service_update_price'})
 
 
 def time_until_next_run(start_time_str, interval):
@@ -42,13 +48,13 @@ def time_until_next_run(start_time_str, interval):
 
 
 def main():
-    url, interval, start_time = read_config()
+    url, interval, start_time, url_send_message = read_config()
     logger.debug(f'Config values: URL={url}, interval={interval}, start_time={start_time}')
     while True:
         time_to_next_run = time_until_next_run(start_time, interval)
         logger.debug(f'Sleeping for {time_to_next_run} seconds')
         time.sleep(time_to_next_run)
-        call_url(url)
+        call_url(url, url_send_message)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ services:
     volumes:
       - /LOG/parser_api:/app/logs
     networks:
-      - parsemotoequipment_app_network
+      - app_network
 
   parser_bot:
     container_name: parser_bot
@@ -21,7 +21,7 @@ services:
     volumes:
       - /LOG/parser_bot:/app/logs
     networks:
-      - parsemotoequipment_app_network
+      - app_network
 
   service_update_price:
     container_name: service_update_price
@@ -31,7 +31,7 @@ services:
     volumes:
       - /LOG/service_update_price:/app/logs
     networks:
-      - parsemotoequipment_app_network
+      - app_network
 
   currency_bot:
     container_name: currency_bot
@@ -41,8 +41,28 @@ services:
     volumes:
       - /LOG/currency_bot:/app/logs
     networks:
-      - parsemotoequipment_app_network
+      - app_network
+
+  sender_bot:
+    container_name: sender_bot
+    build: ./sender_bot
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - /LOG/sender_bot:/app/logs
+    networks:
+      - app_network
+
+  log_monitoring:
+    container_name: log_monitoring
+    build: ./log_monitoring
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - /LOG/log_monitoring:/app/logs
+    networks:
+      - app_network
 
 networks:
-  parsemotoequipment_app_network:
+  app_network:
     driver: bridge

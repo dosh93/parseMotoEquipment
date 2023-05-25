@@ -4,6 +4,8 @@ import mysql.connector
 from configparser import ConfigParser
 
 from common.logger import configure_logger
+from parsers_api.data.category import db_to_category
+from parsers_api.data.markup import json_to_markup
 
 logger = configure_logger(__name__)
 
@@ -47,10 +49,19 @@ class MySQLConnector:
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     url VARCHAR(255) NOT NULL,
                     id_product VARCHAR(255) NOT NULL,
-                    name_site  VARCHAR(255) NOT NULL
+                    name_site  VARCHAR(255) NOT NULL,
+                    category_id INT NOT NULL
                 )
             ''')
             logger.info("Table 'products' created or already exists")
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS categories (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    json_markup TEXT NOT NULL
+                )
+            ''')
+            logger.info("Table 'categories' created or already exists")
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS euro_rates (
                     id INT PRIMARY KEY,
@@ -64,14 +75,14 @@ class MySQLConnector:
         finally:
             self.close()
 
-    def save_data(self, url, id_product, name_site):
+    def save_data(self, url, id_product, name_site, category_id):
         self.connect()
         try:
-            query = "INSERT INTO products (url, id_product, name_site) VALUES (%s, %s, %s)"
-            values = (url, id_product, name_site)
+            query = "INSERT INTO products (url, id_product, name_site, category_id) VALUES (%s, %s, %s, %s)"
+            values = (url, id_product, name_site, category_id)
             self.cursor.execute(query, values)
             self.conn.commit()
-            logger.info("Data saved: url=%s, id_product=%s, name_site=%s", url, id_product, name_site)
+            logger.info("Data saved: url=%s, id_product=%s, name_site=%s, category_id=%s", url, id_product, name_site, category_id)
         except mysql.connector.Error as e:
             logger.error("Error saving data: %s", e)
         finally:
@@ -104,7 +115,6 @@ class MySQLConnector:
         finally:
             self.close()
 
-
     def delete_by_id(self, id):
         self.connect()
         try:
@@ -131,5 +141,39 @@ class MySQLConnector:
             return None
         except mysql.connector.Error as e:
             logger.error(f"Error getting rate {e}")
+        finally:
+            self.close()
+
+    def get_markup(self, category_id):
+        self.connect()
+        try:
+            query = "SELECT * FROM categories WHERE id = %s"
+            values = (category_id,)
+            self.cursor.execute(query, values)
+            rows = self.cursor.fetchone()
+            if rows is not None:
+                logger.info(f"Get category by id: {rows[0]}")
+                return json_to_markup(rows[2])
+            else:
+                logger.warn(f"Not exist category")
+            return None
+        except mysql.connector.Error as e:
+            logger.error(f"Error getting category {e}")
+        finally:
+            self.close()
+
+    def get_categories(self):
+        self.connect()
+        try:
+            query = "SELECT * FROM categories"
+            self.cursor.execute(query)
+
+            logger.info(f"query = {query}")
+            rows = self.cursor.fetchall()
+            logger.info(f"Get categories {len(rows)}", )
+            return db_to_category(rows)
+        except mysql.connector.Error as e:
+            logger.error("Error get categories: %s", e)
+            rows = []
         finally:
             self.close()

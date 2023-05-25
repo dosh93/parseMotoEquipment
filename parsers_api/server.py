@@ -1,10 +1,11 @@
 import configparser
+import json
 import os
 
 from quart import Quart, request
 
 from common.logger import configure_logger
-from main import add_product_marti_motors, update_price_marti_motors, is_duplicate
+from main import add_product_marti_motors, update_price_marti_motors, is_duplicate, get_categories_main
 
 app = Quart(__name__)
 
@@ -20,20 +21,27 @@ host = config.get('flask_app', 'host', fallback='0.0.0.0')
 port = config.getint('flask_app', 'port', fallback=8080)
 
 
-
 @app.route('/add_product', methods=['GET'])
 async def add_product():
     url = request.args.get('url', None)
+    category_id = request.args.get('category_id', None)
     if is_duplicate(url):
         return f"Такой товар уже есть", 409
     if url:
-        result = await add_product_marti_motors(url)
+        result = await add_product_marti_motors(url, category_id)
         logger.info(f'Product with URL "{url}" successfully added')
         product_url = result['productPageUrl']["base"] + result['productPageUrl']["path"]
         return f"Добавлен продукт. Вот ссылка {product_url}", 200
     else:
         logger.error('URL parameter not provided')
         return 'URL parameter not provided', 400
+
+
+@app.route('/get_categories', methods=['GET'])
+async def get_categories():
+    categories = await get_categories_main()
+    logger.info(f'Get categories')
+    return categories
 
 
 @app.route('/update_prices', methods=['GET'])

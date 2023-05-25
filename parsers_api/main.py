@@ -19,9 +19,11 @@ def is_duplicate(url):
     return len(db.get_data_where({"url": url})) != 0
 
 
-async def add_product_marti_motors(url):
+async def add_product_marti_motors(url, category_id):
     rate = CurrencyRate.get_rate_db()
-    item = await parse_by_url(url, rate)
+    markups = db.get_markup(category_id)
+
+    item = await parse_by_url(url, rate, markups)
 
     product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                              get_variant_with_price(item), get_media(item))
@@ -30,7 +32,7 @@ async def add_product_marti_motors(url):
     api.add_variants(result["id"], product_to_wix.variantOptions)
     api.add_media(result["id"], product_to_wix.media)
 
-    db.save_data(item["base_url"], result["id"], "martimotos")
+    db.save_data(item["base_url"], result["id"], "martimotos", category_id)
     return result
 
 
@@ -61,3 +63,7 @@ async def update_price_marti_motors(id_product=None, url=None):
             api.add_media(product_id, product_to_wix.media)
             count_update_product += 1
     return count_update_product
+
+
+async def get_categories_main():
+    return db.get_categories()

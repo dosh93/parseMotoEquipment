@@ -1,5 +1,13 @@
 import asyncio
 import math
+import os
+from configparser import ConfigParser
+
+import requests
+
+config = ConfigParser()
+config_file_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
+config.read(config_file_path)
 
 
 async def retry_on_error(func, end_func, *args, max_retries=3, delay=1):
@@ -19,4 +27,9 @@ async def retry_on_error(func, end_func, *args, max_retries=3, delay=1):
 
 
 def get_price_rub(price, rate):
-    return math.ceil(rate * price * (1 + 15 / 100))
+    return math.ceil(rate * price)
+
+
+def send_service_message(message):
+    url = config.get('send_message', 'url')
+    requests.get(url, params={'text': message, 'service_name': 'parsers_api'})

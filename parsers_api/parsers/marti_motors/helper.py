@@ -1,5 +1,6 @@
 import re
 
+from parsers_api.data.markup import apply_markup
 from parsers_api.my_helper.helpers import get_price_rub
 
 from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, \
@@ -190,10 +191,11 @@ async def is_promo_checked(browser_handler_instance):
         return False
 
 
-async def get_price_on_page(browser_handler_instance, rate):
+async def get_price_on_page(browser_handler_instance, rate, markups, url):
     price_elements = await browser_handler_instance.get_elements_by_xpath(price_xpath)
     price_not_prepare = await browser_handler_instance.get_text_for_element(price_elements[0])
     current_price = float(
         price_not_prepare.replace(" \u20ac", "").replace(",", ".").replace(" ", "").strip()
     )
+    current_price = apply_markup(current_price, markups, url)
     return get_price_rub(current_price, rate)

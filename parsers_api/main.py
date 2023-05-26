@@ -47,13 +47,14 @@ async def update_price_marti_motors(id_product=None, url=None):
     logger.info(f"Product {products}")
     count_update_product = 0
     for product in products:
+        markups = db.get_markup(product[4])
         product_id = product[2]
         code = api.get_product(product_id).status_code
         if code == 404:
             logger.info(f"Product with id {product_id} not found in wix")
             db.delete_by_id(product[0])
         elif code == 200:
-            item = await parse_by_url(product[1], rate)
+            item = await parse_by_url(product[1], rate, markups)
             product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                                      get_variant_with_price(item), get_media(item))
             api.reset_all_variant(product_id)

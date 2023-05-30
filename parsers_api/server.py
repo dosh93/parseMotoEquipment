@@ -45,9 +45,14 @@ async def get_categories():
 
 @app.route('/update_prices', methods=['GET'])
 async def update_prices():
-    result = await update_price_marti_motors()
-    logger.debug('Prices of all products successfully updated')
-    return f"Обновлено продуктов: {result}", 200
+    try:
+        result, errors = await update_price_marti_motors()
+        logger.debug('Prices of all products successfully updated')
+        if len(errors) != 0:
+            logger.warning(f'Not updated products with ids {errors}')
+        return f"Обновлено продуктов: {result}. С ошибками {errors}", 200
+    except Exception as e:
+        return f"Что-то пошло не так: {e}", 500
 
 
 @app.route('/update_price', methods=['GET'])

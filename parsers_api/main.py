@@ -38,6 +38,7 @@ async def update_price_marti_motors(id_product=None, url=None):
     rate = CurrencyRate.get_rate_db()
     categories = db.get_categories()
     count_update_product = 0
+    error_products = []
 
     if id_product is not None:
         condition = {"id_product": id_product}
@@ -51,40 +52,51 @@ async def update_price_marti_motors(id_product=None, url=None):
         for batch in data_generator:
             for product in batch:
                 markups = get_markup_by_category_id(categories, product[4])
-                await update_one_product_martimotos(product, rate, markups)
-                count_update_product += 1
+                result = await update_one_product_martimotos(product, rate, markups)
+                if result is not None:
+                    error_products.append(result)
+                else:
+                    count_update_product += 1
     else:
         products = db.get_data_where(condition)
-        count_update_product = await update_all_product_martimotos(products, rate, categories)
+        count_update_product, result = await update_all_product_martimotos(products, rate, categories)
+        error_products.append(result)
 
-    return count_update_product
+    return count_update_product, error_products
 
 
 async def update_all_product_martimotos(products, rate, categories):
     count_update_product = 0
+    error_products = []
     for product in products:
         markups = get_markup_by_category_id(categories, product[4])
-        await update_one_product_martimotos(product, rate, markups)
+        result = await update_one_product_martimotos(product, rate, markups)
+        if result is not None:
+            error_products.append(result)
         count_update_product += 1
-    return count_update_product
+    return count_update_product, error_products
 
 
 async def update_one_product_martimotos(product, rate, markups):
-    logger.info(f"Product {product}")
-    product_id = product[2]
-    code = api.get_product(product_id).status_code
-    if code == 404:
-        logger.info(f"Product with id {product_id} not found in wix")
-        db.delete_by_id(product[0])
-    elif code == 200:
-        item = await parse_by_url(product[1], rate, markups)
-        product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
-                                 get_variant_with_price(item), get_media(item))
-        api.reset_all_variant(product_id)
-        api.update_product(product_to_wix, product_id)
-        api.add_variants(product_id, product_to_wix.variantOptions)
-        api.delete_media(product_id)
-        api.add_media(product_id, product_to_wix.media)
+    try:
+        logger.info(f"Product {product}")
+        product_id = product[2]
+        code = api.get_product(product_id).status_code
+        if code == 404:
+            logger.info(f"Product with id {product_id} not found in wix")
+            db.delete_by_id(product[0])
+        elif code == 200:
+            item = await parse_by_url(product[1], rate, markups)
+            product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
+                                     get_variant_with_price(item), get_media(item))
+            api.reset_all_variant(product_id)
+            api.update_product(product_to_wix, product_id)
+            api.add_variants(product_id, product_to_wix.variantOptions)
+            api.delete_media(product_id)
+            api.add_media(product_id, product_to_wix.media)
+    except Exception as e:
+        logger.error(f"Error update product: {product}")
+        return product[2]
 
 
 async def get_categories_main():

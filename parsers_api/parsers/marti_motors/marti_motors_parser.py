@@ -18,7 +18,9 @@ async def parse_by_url(url, rate, markups):
         browser_handler_instance = BrowserHandler()
         logger.info(f"Start parse by url {url}")
         await browser_handler_instance.start_browser()
-        await browser_handler_instance.navigate_to(url)
+        result = await browser_handler_instance.navigate_to(url)
+        if not result:
+            raise Exception("Not navigate")
         await wait_load_page(browser_handler_instance)
         await browser_handler_instance.remove_element_by_xpath(header_xpath)
         soup = await browser_handler_instance.get_soup()

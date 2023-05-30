@@ -4,12 +4,11 @@ import os
 
 from quart import Quart, request
 
-from common.logger import configure_logger
 from main import add_product_marti_motors, update_price_marti_motors, is_duplicate, get_categories_main
+from parsers_api.logger import logger
 
 app = Quart(__name__)
 
-logger = configure_logger(__name__)
 
 config = configparser.ConfigParser()
 current_dir = os.path.dirname(os.path.abspath(__file__))

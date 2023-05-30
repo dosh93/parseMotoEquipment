@@ -3,11 +3,10 @@ import os
 import mysql.connector
 from configparser import ConfigParser
 
-from common.logger import configure_logger
 from parsers_api.data.category import db_to_category
 from parsers_api.data.markup import json_to_markup
 
-logger = configure_logger(__name__)
+from parsers_api.logger import logger
 
 
 class MySQLConnector:
@@ -22,29 +21,34 @@ class MySQLConnector:
         self.password = config.get('mysql', 'password')
         self.database = config.get('mysql', 'database')
 
+        self.conn = self.connect()
         logger.debug("MySQLConnector initialized with config file: %s", config_file)
+
+    def __del__(self):
+        self.close()
 
     def connect(self):
         try:
-            self.conn = mysql.connector.connect(
+            conn = mysql.connector.connect(
                 host=self.host,
                 user=self.user,
                 password=self.password,
                 database=self.database
             )
-            self.cursor = self.conn.cursor()
             logger.info("Connected to MySQL database")
+            return conn
         except mysql.connector.Error as e:
             logger.error("Error connecting to MySQL database: %s", e)
+            return None
 
     def close(self):
         self.conn.close()
         logger.info("MySQL connection closed")
 
     def create_table(self):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
-            self.cursor.execute('''
+            cursor.execute('''
                 CREATE TABLE IF NOT EXISTS products (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     url VARCHAR(255) NOT NULL,
@@ -54,7 +58,7 @@ class MySQLConnector:
                 )
             ''')
             logger.info("Table 'products' created or already exists")
-            self.cursor.execute('''
+            cursor.execute('''
                 CREATE TABLE IF NOT EXISTS categories (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
@@ -62,7 +66,7 @@ class MySQLConnector:
                 )
             ''')
             logger.info("Table 'categories' created or already exists")
-            self.cursor.execute('''
+            cursor.execute('''
                 CREATE TABLE IF NOT EXISTS euro_rates (
                     id INT PRIMARY KEY,
                     rate FLOAT NOT NULL,
@@ -73,23 +77,24 @@ class MySQLConnector:
         except mysql.connector.Error as e:
             logger.error("Error creating table 'products': %s", e)
         finally:
-            self.close()
+            cursor.close()
 
     def save_data(self, url, id_product, name_site, category_id):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
             query = "INSERT INTO products (url, id_product, name_site, category_id) VALUES (%s, %s, %s, %s)"
             values = (url, id_product, name_site, category_id)
-            self.cursor.execute(query, values)
+            cursor.execute(query, values)
             self.conn.commit()
-            logger.info("Data saved: url=%s, id_product=%s, name_site=%s, category_id=%s", url, id_product, name_site, category_id)
+            logger.info("Data saved: url=%s, id_product=%s, name_site=%s, category_id=%s", url, id_product, name_site,
+                        category_id)
         except mysql.connector.Error as e:
             logger.error("Error saving data: %s", e)
         finally:
-            self.close()
+            cursor.close()
 
     def get_data_where(self, where_conditions=None):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
             query = "SELECT * FROM products"
             if where_conditions:
@@ -101,38 +106,70 @@ class MySQLConnector:
                 query += " WHERE " + " AND ".join(conditions)
 
                 if args:
-                    self.cursor.execute(query, args)
+                    cursor.execute(query, args)
                 else:
-                    self.cursor.execute(query)
+                    cursor.execute(query)
 
             logger.info(f"query = {query}")
-            rows = self.cursor.fetchall()
+            rows = cursor.fetchall()
             logger.info("Data fetched with WHERE clause: %d rows", len(rows))
             return rows
         except mysql.connector.Error as e:
             logger.error("Error fetching data with WHERE clause: %s", e)
             rows = []
         finally:
-            self.close()
+            cursor.close()
+
+    def get_data_where_batch(self, where_conditions=None, batch_size=50):
+        cursor = self.conn.cursor()
+        try:
+            query = "SELECT * FROM products"
+            if where_conditions:
+                conditions = []
+                args = []
+                for column, value in where_conditions.items():
+                    conditions.append(f"{column} = %s")
+                    args.append(value)
+                query += " WHERE " + " AND ".join(conditions)
+
+                if args:
+                    cursor.execute(query, args)
+                else:
+                    cursor.execute(query)
+
+            logger.info(f"query = {query}")
+
+            while True:
+                rows = cursor.fetchmany(batch_size)
+                if not rows:
+                    break
+
+                logger.info("Data fetched with WHERE clause: %d rows", len(rows))
+                yield rows
+        except mysql.connector.Error as e:
+            logger.error("Error fetching data with WHERE clause: %s", e)
+            rows = []
+        finally:
+            cursor.close()
 
     def delete_by_id(self, id):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
             query = "DELETE FROM products WHERE id = %s"
             values = (id,)
-            self.cursor.execute(query, values)
+            cursor.execute(query, values)
             self.conn.commit()
             logger.info("Data deleted: id=%s", id)
         except mysql.connector.Error as e:
             logger.error("Error deleting data by ID: %s", e)
-        self.close()
+        cursor.close()
 
     def get_currency_rate(self):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
             query = "SELECT rate FROM euro_rates ORDER BY timestamp DESC LIMIT 1"
-            self.cursor.execute(query)
-            rows = self.cursor.fetchone()
+            cursor.execute(query)
+            rows = cursor.fetchone()
             if rows is not None:
                 logger.info(f"Get rate: {rows[0]}")
                 return rows[0]
@@ -142,15 +179,15 @@ class MySQLConnector:
         except mysql.connector.Error as e:
             logger.error(f"Error getting rate {e}")
         finally:
-            self.close()
+            cursor.close()
 
     def get_markup(self, category_id):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
             query = "SELECT * FROM categories WHERE id = %s"
             values = (category_id,)
-            self.cursor.execute(query, values)
-            rows = self.cursor.fetchone()
+            cursor.execute(query, values)
+            rows = cursor.fetchone()
             if rows is not None:
                 logger.info(f"Get category by id: {rows[0]}")
                 return json_to_markup(rows[2])
@@ -160,20 +197,20 @@ class MySQLConnector:
         except mysql.connector.Error as e:
             logger.error(f"Error getting category {e}")
         finally:
-            self.close()
+            cursor.close()
 
     def get_categories(self):
-        self.connect()
+        cursor = self.conn.cursor()
         try:
             query = "SELECT * FROM categories"
-            self.cursor.execute(query)
+            cursor.execute(query)
 
             logger.info(f"query = {query}")
-            rows = self.cursor.fetchall()
+            rows = cursor.fetchall()
             logger.info(f"Get categories {len(rows)}", )
             return db_to_category(rows)
         except mysql.connector.Error as e:
             logger.error("Error get categories: %s", e)
             rows = []
         finally:
-            self.close()
+            cursor.close()

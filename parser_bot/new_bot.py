@@ -94,7 +94,7 @@ async def category_callback_handler(query: types.CallbackQuery, callback_data: d
 async def update_prices(message: types.Message):
     logger.info(f"Start command {message.text} with chat_id {message.chat.id}")
     async with ClientSession() as session:
-        async with session.get(f"{API_HOST}:{API_PORT}/update_prices") as resp:
+        async with session.get(f"http://{API_HOST}:{API_PORT}/update_prices") as resp:
             result = await resp.text()
             await message.reply(result)
     logger.info(f"End command {message.text} with chat_id {message.chat.id}")

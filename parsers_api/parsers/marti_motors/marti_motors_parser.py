@@ -1,8 +1,6 @@
 import json
 from asyncio import sleep
 
-from common.logger import configure_logger
-from parsers_api.currency_rate import CurrencyRate
 from parsers_api.parsers.browser_handler import BrowserHandler
 from parsers_api.parsers.marti_motors.helper import accept_cookies, get_description, get_photos_link, get_color_name, \
     get_spec, \
@@ -11,7 +9,7 @@ from parsers_api.parsers.marti_motors.locators import colors_xpath, name_xpath, 
     id_sku, \
     class_sku, header_xpath, promo_xpath, price_xpath, cooke_accept_banner_xpath
 
-logger = configure_logger(__name__)
+from parsers_api.logger import logger
 
 
 async def parse_by_url(url, rate, markups):

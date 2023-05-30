@@ -1,11 +1,8 @@
 import requests
 import json
 from datetime import datetime, timedelta
-
-from common.logger import configure_logger
 from parsers_api.db_conn.my_sql_connector import MySQLConnector
-
-logger = configure_logger(__name__)
+from parsers_api.logger import logger
 
 
 class CurrencyRate:

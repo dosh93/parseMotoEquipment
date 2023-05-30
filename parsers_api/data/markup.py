@@ -2,11 +2,9 @@ import json
 from enum import Enum
 from dataclasses import dataclass
 from typing import List
-
-from common.logger import configure_logger
 from parsers_api.my_helper.helpers import send_service_message
 
-logger = configure_logger(__name__)
+from parsers_api.logger import logger
 
 
 class MarkupType(Enum):

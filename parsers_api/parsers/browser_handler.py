@@ -1,13 +1,9 @@
-import asyncio
 import configparser
 import os
 
 from bs4 import BeautifulSoup
 from pyppeteer import launch
-
-from common.logger import configure_logger
-
-logger = configure_logger(__name__)
+from parsers_api.logger import logger
 
 
 class BrowserHandler:

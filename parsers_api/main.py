@@ -100,6 +100,7 @@ async def update_one_product_martimotos(product, rate, markups):
 
 
 async def get_categories_main():
+    logger.info("Starting get categories")
     return db.get_categories()
 
 

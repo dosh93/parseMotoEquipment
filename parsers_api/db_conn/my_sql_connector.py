@@ -200,12 +200,13 @@ class MySQLConnector:
             cursor.close()
 
     def get_categories(self):
+        logger.info("Creating cursor")
         cursor = self.conn.cursor()
         try:
             query = "SELECT * FROM categories"
-            cursor.execute(query)
-
             logger.info(f"query = {query}")
+            cursor.execute(query)
+            logger.info("Exiting cursor done")
             rows = cursor.fetchall()
             logger.info(f"Get categories {len(rows)}", )
             return db_to_category(rows)
@@ -214,3 +215,4 @@ class MySQLConnector:
             rows = []
         finally:
             cursor.close()
+            logger.info("Cursor closed")

@@ -38,8 +38,8 @@ async def add_product():
 
 @app.route('/get_categories', methods=['GET'])
 async def get_categories():
-    categories = await get_categories_main()
     logger.info(f'Get categories')
+    categories = await get_categories_main()
     return categories
 
 

@@ -71,7 +71,8 @@ async def parse_by_url(url, rate, markups):
 
         item["one_price"] = await get_price_on_page(browser_handler_instance, rate, markups, url)
         map_photo_to_color(item)
-        logger.info(f"Done parse {url}\n{json.dumps(item, indent=2)}")
+        logger.info(f"Done parse {url}")
+        logger.debug(f"json: \n{json.dumps(item, indent=2)}")
         return item
     except Exception as e:
         logger.error(f"Error parsing {e}")

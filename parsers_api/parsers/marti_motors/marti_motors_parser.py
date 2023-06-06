@@ -53,11 +53,11 @@ async def parse_by_url(url, rate, markups):
                     isvisible_promo = await browser_handler_instance.is_element_visible_by_xpath(promo_xpath)
 
                     if isvisible_promo:
-                        await sleep(0.2)
+                        await sleep(1)
 
                     if isvisible_promo and not (await is_promo_checked(browser_handler_instance)):
                         await browser_handler_instance.click(promo_xpath)
-                        await sleep(0.2)
+                        await sleep(1)
 
                     price['price'] = await get_price_on_page(browser_handler_instance, rate, markups, url)
                     price['isExist'] = True

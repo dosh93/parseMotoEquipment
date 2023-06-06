@@ -1,5 +1,5 @@
 import configparser
-import json
+from quart import Response
 import os
 
 from quart import Quart, request
@@ -40,7 +40,7 @@ async def add_product():
 async def get_categories():
     logger.info(f'Get categories')
     categories = await get_categories_main()
-    return categories
+    return Response(categories, mimetype='application/json')
 
 
 @app.route('/update_prices', methods=['GET'])

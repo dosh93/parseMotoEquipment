@@ -1,12 +1,37 @@
-import os
-
-import mysql.connector
+from pony.orm import Database, Required, Set, PrimaryKey, Optional, db_session, commit, select
 from configparser import ConfigParser
 
-from parsers_api.data.category import db_to_category
 from parsers_api.data.markup import json_to_markup
-
 from parsers_api.logger import logger
+import os
+
+db = Database()
+from pony.orm import set_sql_debug
+
+set_sql_debug(True)
+
+
+class Product(db.Entity):
+    _table_ = 'products'
+    id = PrimaryKey(int, auto=True)
+    url = Required(str)
+    id_product = Required(str)
+    name_site = Required(str)
+    category_id = Required(int)
+
+
+class Category(db.Entity):
+    _table_ = 'categories'
+    id = PrimaryKey(int, auto=True)
+    name = Required(str)
+    json_markup = Required(str)
+
+
+class EuroRate(db.Entity):
+    _table_ = 'euro_rates'
+    id = PrimaryKey(int)
+    rate = Required(float)
+    timestamp = Required(str)
 
 
 class MySQLConnector:
@@ -21,198 +46,81 @@ class MySQLConnector:
         self.password = config.get('mysql', 'password')
         self.database = config.get('mysql', 'database')
 
-        self.conn = self.connect()
+        db.bind(provider='mysql', host=self.host, user=self.user, passwd=self.password, db=self.database)
+        db.generate_mapping(create_tables=True)
         logger.debug("MySQLConnector initialized with config file: %s", config_file)
 
-    def __del__(self):
-        self.close()
-
-    def connect(self):
-        try:
-            conn = mysql.connector.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                database=self.database
-            )
-            logger.info("Connected to MySQL database")
-            return conn
-        except mysql.connector.Error as e:
-            logger.error("Error connecting to MySQL database: %s", e)
-            return None
-
-    def close(self):
-        self.conn.close()
-        logger.info("MySQL connection closed")
-
-    def create_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS products (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    url VARCHAR(255) NOT NULL,
-                    id_product VARCHAR(255) NOT NULL,
-                    name_site  VARCHAR(255) NOT NULL,
-                    category_id INT NOT NULL
-                )
-            ''')
-            logger.info("Table 'products' created or already exists")
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS categories (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    json_markup TEXT NOT NULL
-                )
-            ''')
-            logger.info("Table 'categories' created or already exists")
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS euro_rates (
-                    id INT PRIMARY KEY,
-                    rate FLOAT NOT NULL,
-                    timestamp DATETIME NOT NULL
-                )    
-            ''')
-            logger.info("Table 'euro_rates' created or already exists")
-        except mysql.connector.Error as e:
-            logger.error("Error creating table 'products': %s", e)
-        finally:
-            cursor.close()
-
+    @db_session
     def save_data(self, url, id_product, name_site, category_id):
-        cursor = self.conn.cursor()
         try:
-            query = "INSERT INTO products (url, id_product, name_site, category_id) VALUES (%s, %s, %s, %s)"
-            values = (url, id_product, name_site, category_id)
-            cursor.execute(query, values)
-            self.conn.commit()
+            Product(url=url, id_product=id_product, name_site=name_site, category_id=category_id)
+            db.commit()
             logger.info("Data saved: url=%s, id_product=%s, name_site=%s, category_id=%s", url, id_product, name_site,
                         category_id)
-        except mysql.connector.Error as e:
+        except Exception as e:
             logger.error("Error saving data: %s", e)
-        finally:
-            cursor.close()
 
-    def get_data_where(self, where_conditions=None):
-        cursor = self.conn.cursor()
-        try:
-            query = "SELECT * FROM products"
-            if where_conditions:
-                conditions = []
-                args = []
-                for column, value in where_conditions.items():
-                    conditions.append(f"{column} = %s")
-                    args.append(value)
-                query += " WHERE " + " AND ".join(conditions)
+    @db_session
+    def get_data_by_id_product(self, id_product):
+        logger.info("Fetching data with condition: id_product=%s", id_product)
+        data = list(Product.select(lambda p: p.id_product == id_product))
+        logger.info("Fetched %d rows", len(data))
+        return data
 
-                if args:
-                    cursor.execute(query, args)
-                else:
-                    cursor.execute(query)
+    @db_session
+    def get_data_by_url(self, url):
+        logger.info("Fetching data with condition: url=%s", url)
+        data = list(Product.select(lambda p: p.url == url))
+        logger.info("Fetched %d rows", len(data))
+        return data
 
-            logger.info(f"query = {query}")
-            rows = cursor.fetchall()
-            logger.info("Data fetched with WHERE clause: %d rows", len(rows))
-            return rows
-        except mysql.connector.Error as e:
-            logger.error("Error fetching data with WHERE clause: %s", e)
-            rows = []
-        finally:
-            cursor.close()
-
-    def get_data_where_batch(self, where_conditions=None, batch_size=50):
-        cursor = self.conn.cursor()
-        try:
-            query = "SELECT * FROM products"
-            if where_conditions:
-                conditions = []
-                args = []
-                for column, value in where_conditions.items():
-                    conditions.append(f"{column} = %s")
-                    args.append(value)
-                query += " WHERE " + " AND ".join(conditions)
-
-                if args:
-                    cursor.execute(query, args)
-                else:
-                    cursor.execute(query)
-
-            logger.info(f"query = {query}")
-
-            while True:
-                rows = cursor.fetchmany(batch_size)
-                if not rows:
+    def get_data_where_batch(self, name_site="martimotos", batch_size=2):
+        offset = 0
+        while True:
+            with db_session:
+                data_query = select(p for p in Product if p.name_site == name_site)
+                batch = data_query.limit(batch_size, offset=offset)[:]
+                if not batch:
                     break
+                logger.info("Fetched %d rows", len(batch))
+                yield batch
+            offset += batch_size
 
-                logger.info("Data fetched with WHERE clause: %d rows", len(rows))
-                yield rows
-        except mysql.connector.Error as e:
-            logger.error("Error fetching data with WHERE clause: %s", e)
-            rows = []
-        finally:
-            cursor.close()
-
+    @db_session
     def delete_by_id(self, id):
-        cursor = self.conn.cursor()
+        logger.info("Deleting Product with ID: %s", id)
         try:
-            query = "DELETE FROM products WHERE id = %s"
-            values = (id,)
-            cursor.execute(query, values)
-            self.conn.commit()
-            logger.info("Data deleted: id=%s", id)
-        except mysql.connector.Error as e:
-            logger.error("Error deleting data by ID: %s", e)
-        cursor.close()
+            Product[id].delete()
+            logger.info("Deleted Product with ID: %s", id)
+        except Exception as e:
+            logger.error("Error deleting Product with ID: %s, %s", id, e)
 
+    @db_session
     def get_currency_rate(self):
-        cursor = self.conn.cursor()
+        logger.info("Getting latest currency rate")
         try:
-            query = "SELECT rate FROM euro_rates ORDER BY timestamp DESC LIMIT 1"
-            cursor.execute(query)
-            rows = cursor.fetchone()
-            if rows is not None:
-                logger.info(f"Get rate: {rows[0]}")
-                return rows[0]
-            else:
-                logger.warn(f"Rate euro table is empty")
-            return None
-        except mysql.connector.Error as e:
-            logger.error(f"Error getting rate {e}")
-        finally:
-            cursor.close()
+            rate = EuroRate.select().order_by(EuroRate.timestamp.desc()).first().rate
+            logger.info("Got latest currency rate: %s", rate)
+            return rate
+        except Exception as e:
+            logger.error("Error getting latest currency rate: %s", e)
 
+    @db_session
     def get_markup(self, category_id):
-        cursor = self.conn.cursor()
+        logger.info("Getting markup for category ID: %s", category_id)
         try:
-            query = "SELECT * FROM categories WHERE id = %s"
-            values = (category_id,)
-            cursor.execute(query, values)
-            rows = cursor.fetchone()
-            if rows is not None:
-                logger.info(f"Get category by id: {rows[0]}")
-                return json_to_markup(rows[2])
-            else:
-                logger.warn(f"Not exist category")
-            return None
-        except mysql.connector.Error as e:
-            logger.error(f"Error getting category {e}")
-        finally:
-            cursor.close()
+            markup = Category[category_id].json_markup
+            logger.info("Got markup for category ID: %s", category_id)
+            return json_to_markup(markup)
+        except Exception as e:
+            logger.error("Error getting markup for category ID: %s, %s", category_id, e)
 
+    @db_session
     def get_categories(self):
-        logger.info("Creating cursor")
-        cursor = self.conn.cursor()
+        logger.info("Getting all categories")
         try:
-            query = "SELECT * FROM categories"
-            logger.info(f"query = {query}")
-            cursor.execute(query)
-            logger.info("Exiting cursor done")
-            rows = cursor.fetchall()
-            logger.info(f"Get categories {len(rows)}", )
-            return db_to_category(rows)
-        except mysql.connector.Error as e:
-            logger.error("Error get categories: %s", e)
-            rows = []
-        finally:
-            cursor.close()
-            logger.info("Cursor closed")
+            categories = list(Category.select())
+            logger.info("Got %s categories", len(categories))
+            return categories
+        except Exception as e:
+            logger.error("Error getting categories: %s", e)

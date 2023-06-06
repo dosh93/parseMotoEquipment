@@ -1,3 +1,5 @@
+import json
+
 from db_conn.my_sql_connector import MySQLConnector
 from parsers.marti_motors.helper import get_variants, get_variant_with_price, get_media
 from parsers.marti_motors.marti_motors_parser import parse_by_url
@@ -10,11 +12,10 @@ from parsers_api.logger import logger
 
 api = WixAPI()
 db = MySQLConnector()
-db.create_table()
 
 
 def is_duplicate(url):
-    return len(db.get_data_where({"url": url})) != 0
+    return len(db.get_data_by_url(url)) != 0
 
 
 async def add_product_marti_motors(url, category_id):
@@ -40,25 +41,23 @@ async def update_price_marti_motors(id_product=None, url=None):
     count_update_product = 0
     error_products = []
 
-    if id_product is not None:
-        condition = {"id_product": id_product}
-    elif url is not None:
-        condition = {"url": url}
-    else:
-        condition = {"name_site": "martimotos"}
-
     if id_product is None and url is None:
-        data_generator = db.get_data_where_batch(condition)
+        data_generator = db.get_data_where_batch("martimotos")
         for batch in data_generator:
             for product in batch:
-                markups = get_markup_by_category_id(categories, product[4])
+                markups = get_markup_by_category_id(categories, product.category_id)
                 result = await update_one_product_martimotos(product, rate, markups)
                 if result is not None:
                     error_products.append(result)
                 else:
                     count_update_product += 1
     else:
-        products = db.get_data_where(condition)
+        products = None
+        if id_product is not None:
+            products = db.get_data_by_id_product(id_product)
+        else:
+            products = db.get_data_by_url(url)
+
         count_update_product, result = await update_all_product_martimotos(products, rate, categories)
         error_products.append(result)
 
@@ -69,7 +68,7 @@ async def update_all_product_martimotos(products, rate, categories):
     count_update_product = 0
     error_products = []
     for product in products:
-        markups = get_markup_by_category_id(categories, product[4])
+        markups = get_markup_by_category_id(categories, product.category_id)
         result = await update_one_product_martimotos(product, rate, markups)
         if result is not None:
             error_products.append(result)
@@ -80,13 +79,13 @@ async def update_all_product_martimotos(products, rate, categories):
 async def update_one_product_martimotos(product, rate, markups):
     try:
         logger.info(f"Product {product}")
-        product_id = product[2]
+        product_id = product.id_product
         code = api.get_product(product_id).status_code
         if code == 404:
             logger.info(f"Product with id {product_id} not found in wix")
-            db.delete_by_id(product[0])
+            db.delete_by_id(product.id)
         elif code == 200:
-            item = await parse_by_url(product[1], rate, markups)
+            item = await parse_by_url(product.url, rate, markups)
             product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                                      get_variant_with_price(item), get_media(item))
             api.reset_all_variant(product_id)
@@ -96,15 +95,17 @@ async def update_one_product_martimotos(product, rate, markups):
             api.add_media(product_id, product_to_wix.media)
     except Exception as e:
         logger.error(f"Error update product: {product}")
-        return product[2]
+        return product.id_product
 
 
 async def get_categories_main():
     logger.info("Starting get categories")
-    return db.get_categories()
+    categories = db.get_categories()
+    categories_list = [c.to_dict() for c in categories]
+    return json.dumps(categories_list, ensure_ascii=False)
 
 
 def get_markup_by_category_id(categories, category_id):
     for category in categories:
         if category.id == category_id:
-            return json_to_markup(category.markup)
+            return json_to_markup(category.json_markup)

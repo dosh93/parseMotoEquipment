@@ -6,9 +6,6 @@ from parsers_api.logger import logger
 import os
 
 db = Database()
-from pony.orm import set_sql_debug
-
-set_sql_debug(True)
 
 
 class Product(db.Entity):
@@ -74,7 +71,7 @@ class MySQLConnector:
         logger.info("Fetched %d rows", len(data))
         return data
 
-    def get_data_where_batch(self, name_site="martimotos", batch_size=2):
+    def get_data_where_batch(self, name_site, batch_size=100):
         offset = 0
         while True:
             with db_session:

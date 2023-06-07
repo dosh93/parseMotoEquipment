@@ -1,12 +1,15 @@
 import re
 
+import requests
+
+from currency_bot.bot import logger
 from parsers_api.data.markup import apply_markup
 from parsers_api.my_helper.helpers import get_price_rub
 
 from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, \
     product_descriptions_xpath, \
     link_photo_xpath, child_element_color_xpath, photos_slider_xpath, input_count_xpath, button_add_xpath, colors_xpath, \
-    price_xpath, sizes_xpath, promo_checkbox_xpath
+    price_xpath, sizes_xpath, promo_checkbox_xpath, id_product_attribute_xpath
 
 
 async def accept_cookies(browser_handler_instance):
@@ -192,10 +195,40 @@ async def is_promo_checked(browser_handler_instance):
 
 
 async def get_price_on_page(browser_handler_instance, rate, markups, url):
-    price_elements = await browser_handler_instance.get_elements_by_xpath(price_xpath)
-    price_not_prepare = await browser_handler_instance.get_text_for_element(price_elements[0])
-    current_price = float(
-        price_not_prepare.replace(" \u20ac", "").replace(",", ".").replace(" ", "").strip()
-    )
+    id_product_attribute = await browser_handler_instance.get_attribute_by_xpath(id_product_attribute_xpath, "value")
+    current_price = get_price_with_promo(url, id_product_attribute)
+    logger.info(f"Price with promo {current_price}")
     current_price = apply_markup(current_price, markups, url)
     return get_price_rub(current_price, rate)
+
+
+def get_price_with_promo(url, id_product_attribute):
+    headers = {
+        'authority': 'www.martimotos.com',
+        'accept': 'application/json, text/javascript, */*; q=0.01',
+        'accept-language': 'ru,en;q=0.9',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'origin': 'https://www.martimotos.com',
+        'referer': url,
+        'sec-ch-ua': '"Chromium";v="112", "YaBrowser";v="23", "Not:A-Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 YaBrowser/23.5.1.714 Yowser/2.5 Safari/537.36',
+        'x-requested-with': 'XMLHttpRequest',
+    }
+
+    data = {
+        'ajax': 'true',
+        'getPriceWithPromo': 'true',
+        'id_product_attribute': id_product_attribute,
+        'checked': 'true'
+    }
+
+    response = requests.post(url, headers=headers, data=data)
+
+    if response.status_code == 200:
+        response_json = response.json()
+        return response_json.get('price')

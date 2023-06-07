@@ -51,6 +51,9 @@ async def update_price_marti_motors(id_product=None, url=None):
                     error_products.append(result)
                 else:
                     count_update_product += 1
+        products = db.get_products_by_ids(error_products)
+        new_count_update, error_products = await update_products(products, rate, categories)
+        count_update_product += new_count_update
     else:
         products = None
         if id_product is not None:
@@ -65,6 +68,15 @@ async def update_price_marti_motors(id_product=None, url=None):
 
 
 async def update_all_product_martimotos(products, rate, categories):
+    count_update_product, error_products = await update_products(products, rate, categories)
+    if error_products:
+        products = db.get_products_by_ids(error_products)
+        new_count_update, error_products = await update_products(products, rate, categories)
+        count_update_product += new_count_update
+    return count_update_product, error_products
+
+
+async def update_products(products, rate, categories):
     count_update_product = 0
     error_products = []
     for product in products:
@@ -72,7 +84,8 @@ async def update_all_product_martimotos(products, rate, categories):
         result = await update_one_product_martimotos(product, rate, markups)
         if result is not None:
             error_products.append(result)
-        count_update_product += 1
+        else:
+            count_update_product += 1
     return count_update_product, error_products
 
 

@@ -2,7 +2,7 @@ import re
 
 import requests
 
-from currency_bot.bot import logger
+from parsers_api.logger import logger
 from parsers_api.data.markup import apply_markup
 from parsers_api.my_helper.helpers import get_price_rub
 

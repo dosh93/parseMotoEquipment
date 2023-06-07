@@ -121,3 +121,14 @@ class MySQLConnector:
             return categories
         except Exception as e:
             logger.error("Error getting categories: %s", e)
+
+    @db_session
+    def get_products_by_ids(self, product_ids):
+        logger.info("Getting products by IDs: %s", product_ids)
+        try:
+            products = select(p for p in Product if p.id_product in product_ids)[:]
+            logger.info("Got %s products", len(products))
+            return products
+        except Exception as e:
+            logger.error("Error getting products with ids: %s", e)
+

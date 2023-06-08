@@ -228,7 +228,7 @@ def get_price_with_promo(url, id_product_attribute):
     }
 
     response = requests.post(url, headers=headers, data=data)
-    logger.info("get_price_with_promo response: %s", response)
+    logger.info("get_price_with_promo response with %s: %s", id_product_attribute, response.text)
 
     if response.status_code == 200:
         response_json = response.json()

@@ -203,6 +203,8 @@ async def get_price_on_page(browser_handler_instance, rate, markups, url):
 
 
 def get_price_with_promo(url, id_product_attribute):
+    session = requests.Session()
+    get_response = session.get(url)
     headers = {
         'authority': 'www.martimotos.com',
         'accept': 'application/json, text/javascript, */*; q=0.01',
@@ -227,7 +229,7 @@ def get_price_with_promo(url, id_product_attribute):
         'checked': 'true'
     }
 
-    response = requests.post(url, headers=headers, data=data)
+    response = session.post(url, headers=headers, data=data)
     logger.info("get_price_with_promo response with %s: %s", id_product_attribute, response.text)
 
     if response.status_code == 200:

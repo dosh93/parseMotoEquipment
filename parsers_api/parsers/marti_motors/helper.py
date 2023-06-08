@@ -202,35 +202,63 @@ async def get_price_on_page(browser_handler_instance, rate, markups, url):
     return get_price_rub(current_price, rate)
 
 
+def form_cookie_string(cookies_dict):
+    return '; '.join([f'{k}={v}' for k, v in cookies_dict.items()])
+
+
 def get_price_with_promo(url, id_product_attribute):
-    get_response = requests.get(url)
-    cookies = get_response.cookies
-    headers = {
+    common_headers = {
         'authority': 'www.martimotos.com',
-        'accept': 'application/json, text/javascript, */*; q=0.01',
         'accept-language': 'ru,en;q=0.9',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'origin': 'https://www.martimotos.com',
-        'referer': url,
         'sec-ch-ua': '"Chromium";v="112", "YaBrowser";v="23", "Not:A-Brand";v="99"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 YaBrowser/23.5.1.714 Yowser/2.5 Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest',
-        'Cookie': '; '.join([f'{k}={v}' for k, v in cookies.items()])
+        'referer': url
     }
+    headers_get = common_headers.copy()
+    headers_get[
+        'accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+    headers_get['sec-fetch-dest'] = 'document'
+    headers_get['sec-fetch-mode'] = 'navigate'
+    headers_get['sec-fetch-site'] = 'none'
+    headers_get['sec-fetch-user'] = '?1'
+    headers_get['upgrade-insecure-requests'] = '1'
 
-    data = {
+    get_response = requests.get(url, headers=headers_get)
+    get_cookies = get_response.cookies
+    logger.info(f"cookies {get_cookies}")
+
+    headers_post = common_headers.copy()
+    headers_post['accept'] = 'application/json, text/javascript, */*; q=0.01'
+    headers_post['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    headers_post['origin'] = 'https://www.martimotos.com'
+    headers_post['sec-fetch-dest'] = 'empty'
+    headers_post['sec-fetch-mode'] = 'cors'
+    headers_post['sec-fetch-site'] = 'same-origin'
+    headers_post['x-requested-with'] = 'XMLHttpRequest'
+    headers_post['cookie'] = form_cookie_string(get_cookies)
+
+    common_data = {
         'ajax': 'true',
-        'getPriceWithPromo': 'true',
-        'id_product_attribute': id_product_attribute,
-        'checked': 'true'
+        'id_product_attribute': id_product_attribute
     }
 
-    response = requests.post(url, headers=headers, data=data)
+    data_post = common_data.copy()
+    data_post['getCodePromo'] = 'true'
+
+    post_response = requests.post(url, headers=headers_post, data=data_post)
+    post_cookies = post_response.cookies
+    logger.info(f"cookies {post_cookies}")
+
+    headers_post['cookie'] = "__lglaw=2%2C3%2C4%2C5; " + form_cookie_string(get_cookies) + "; " + form_cookie_string(
+        post_cookies)
+    logger.info(f'headers {headers_post}')
+    last_data = common_data.copy()
+    last_data['getPriceWithPromo'] = 'true'
+    last_data['checked'] = 'true'
+    logger.info(f'data {last_data}')
+    response = requests.post(url, headers=headers_post, data=last_data)
     logger.info("get_price_with_promo response with %s: %s", id_product_attribute, response.text)
 
     if response.status_code == 200:

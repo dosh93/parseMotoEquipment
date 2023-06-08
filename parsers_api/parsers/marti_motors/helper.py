@@ -203,6 +203,8 @@ async def get_price_on_page(browser_handler_instance, rate, markups, url):
 
 
 def get_price_with_promo(url, id_product_attribute):
+    get_response = requests.get(url)
+    cookies = get_response.cookies
     headers = {
         'authority': 'www.martimotos.com',
         'accept': 'application/json, text/javascript, */*; q=0.01',
@@ -219,6 +221,7 @@ def get_price_with_promo(url, id_product_attribute):
         'sec-fetch-site': 'same-origin',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 YaBrowser/23.5.1.714 Yowser/2.5 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
+        'Cookie': '; '.join([f'{k}={v}' for k, v in cookies.items()])
     }
 
     data = {

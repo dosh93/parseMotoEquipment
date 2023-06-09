@@ -369,3 +369,7 @@ class BrowserHandler:
             logger.debug(f"Element is not visible by XPath: {xpath}")
 
         return is_visible
+
+    async def screenshot(self, save_path):
+        await self.page.screenshot({'path': save_path})
+

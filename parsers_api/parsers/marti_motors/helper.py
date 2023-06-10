@@ -1,10 +1,10 @@
 import re
-
-import requests
+import copy
 
 from parsers_api.logger import logger
 from parsers_api.data.markup import apply_markup
 from parsers_api.my_helper.helpers import get_price_rub
+from parsers_api.parsers.common_marti_motors.common import get_price_with_promo
 
 from parsers_api.parsers.marti_motors.locators import button_cooke_accept_xpath, id_table_spec, \
     product_descriptions_xpath, \
@@ -158,14 +158,35 @@ def get_variant_with_price(item):
     return variants_obj
 
 
-def get_media(item):
+def get_media(item, max_photos=15):
     media_arr = []
-    if len(item["photos"]) > 15:
-        photos = item["photos"][:15]
-        for photo in photos:
-            media_arr.append({
-                "url": photo
-            })
+    if len(item["photos"]) > max_photos:
+        if len(item["photoByColor"]) > max_photos:
+            photos = item["photos"][:max_photos]
+            for photo in photos:
+                media_arr.append({
+                    "url": photo
+                })
+        else:
+            count = 0
+            copy_photo_by_color = copy.deepcopy(item["photoByColor"])
+            while count < max_photos:
+                for photos_by_color in copy_photo_by_color:
+                    photos = photos_by_color['photos']
+                    if len(photos) > 0:
+                        media_arr.append({
+                            "url": photos[0],
+                            "choice": {
+                                "option": "Цвет",
+                                "choice": photos_by_color["color"]
+                            }
+                        })
+                        del photos[0]
+                        count += 1
+                        if count == max_photos:
+                            break
+
+
     else:
         for photoByColor in item["photoByColor"]:
             for photo in photoByColor["photos"]:
@@ -204,43 +225,3 @@ async def get_price_on_page(browser_handler_instance, rate, markups, url):
 
 def form_cookie_string(cookies_dict):
     return '; '.join([f'{k}={v}' for k, v in cookies_dict.items()])
-
-
-def get_price_with_promo(url, id_product_attribute):
-    headers = {
-        'authority': 'www.martimotos.com',
-        'accept': 'application/json, text/javascript, */*; q=0.01',
-        'accept-language': 'ru,en;q=0.9',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'origin': 'https://www.martimotos.com',
-        'referer': url,
-        'cookie': 'PrestaShop-990b6adc0296b50eeb235103a6e5b9d5=a9a9e9e5b04262e6c5e680f55f70067421e9ee9be7817ff227ed67f0ce6264d4%3AP8kvxRe61QEUTuuHUbmvm0PCkuqVNoWmL8VEvVkP62PXyea42hX0eBNBWOmXcqxspWVFgLeVl4Bz1x9g%2FjvLS1d8rxtqYVBybcx2JrfwWj0%2Bw5k%2FwtUjUtJCJj8g6Q36%2BEBxEZYwJNuBSOkj6qavRl%2F%2FjaKLZ8mvdCWitKiOJHfrKZ%2BaKMAWn9cffq%2F74HEc%2Bt7GJopgBNFnfXTcIArYHxfTMHlXNuM0IR3C1SI%2BTQ7ZY1VAmC1Ky3BVQyfkBIN48shR8%2BUcwZ%2FmLHURSNdcEBnM4%2BdMHZ9LqqkIMAv4PI0cAI3cYlsC9KYKnDq7%2FoP7FE7nzYNzid8o%2FDiB0PSoWw%3D%3D; PHPSESSID=41nto9vgp7808o87m0fkpcm9i1',
-        'sec-ch-ua': '"Chromium";v="112", "YaBrowser";v="23", "Not:A-Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 YaBrowser/23.5.1.714 Yowser/2.5 Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest',
-    }
-
-    data = {
-        'ajax': 'true',
-        'getPriceWithPromo': 'true',
-        'id_product_attribute': id_product_attribute,
-        'checked': 'true'
-    }
-
-    response = requests.post(url, headers=headers, data=data)
-    logger.info("get_price_with_promo response with %s: %s", id_product_attribute, response.text)
-
-    if response.status_code == 200:
-        response_json = response.json()
-        return response_json.get('price')
-
-    response = requests.post(url, headers=headers, data=data)
-
-    if response.status_code == 200:
-        response_json = response.json()
-        return response_json.get('price')

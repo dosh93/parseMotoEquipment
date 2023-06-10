@@ -64,7 +64,6 @@ async def parse_by_url(url, rate, markups):
 
         item["one_price"] = await get_price_on_page(browser_handler_instance, rate, markups, url)
         map_photo_to_color(item)
-        await browser_handler_instance.screenshot(str(uuid.uuid4()) + ".png")
         logger.info(f"Done parse {url}")
         logger.debug(f"json: \n{json.dumps(item, indent=2)}")
         return item

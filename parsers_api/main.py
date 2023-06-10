@@ -2,7 +2,7 @@ import json
 
 from db_conn.my_sql_connector import MySQLConnector
 from parsers.marti_motors.helper import get_variants, get_variant_with_price, get_media
-from parsers.marti_motors.marti_motors_parser import parse_by_url
+from parsers.marti_motors_not_browser.marti_motors_parser import parse_by_url
 from parsers_api.currency_rate import CurrencyRate
 from parsers_api.data.markup import json_to_markup
 
@@ -22,7 +22,7 @@ async def add_product_marti_motors(url, category_id):
     rate = CurrencyRate.get_rate_db()
     markups = db.get_markup(category_id)
 
-    item = await parse_by_url(url, rate, markups)
+    item = parse_by_url(url, rate, markups)
 
     product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                              get_variant_with_price(item), get_media(item))
@@ -98,7 +98,7 @@ async def update_one_product_martimotos(product, rate, markups):
             logger.info(f"Product with id {product_id} not found in wix")
             db.delete_by_id(product.id)
         elif code == 200:
-            item = await parse_by_url(product.url, rate, markups)
+            item = parse_by_url(product.url, rate, markups)
             product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
                                      get_variant_with_price(item), get_media(item))
             api.reset_all_variant(product_id)

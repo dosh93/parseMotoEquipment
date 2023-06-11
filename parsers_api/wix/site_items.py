@@ -1,6 +1,7 @@
 class WixItem:
 
-    def __init__(self, name: str, price: int, description: str, product_options: list, variant_options: list, media: list):
+    def __init__(self, name: str, price: int, description: str, product_options: list, variant_options: list,
+                 media: list):
         self.product = {
             "product": {
                 "name": name,
@@ -41,3 +42,11 @@ class WixItem:
                 "productOptions": self.product["product"]["productOptions"]
             }
         }
+
+    def clean_media(self, product_from_wix):
+        choices = next((productOption["choices"] for productOption in product_from_wix["product"]["productOptions"] if
+                        productOption["name"] == "Цвет"), None)
+
+        color_with_photo = [choice["value"] for choice in choices if "media" in choice]
+        self.media['media'] = [one_media for one_media in self.media['media'] if
+                               one_media['choice']['choice'] not in color_with_photo]

@@ -132,30 +132,34 @@ def get_variants(item):
     return variants
 
 
+def get_price_by_color_and_size(color, size, prices):
+    return next((price for price in prices if price['size_name'] == size and price['color_name'] == color), None)
+
+
 def get_variant_with_price(item):
     variants = []
-    for variant in item['price']:
-        choices = {
-            "Размер": variant['size_name'],
-            "Цвет": variant['color_name']
-        }
-        if variant['isExist']:
-            variants.append({
-                "choices": choices,
-                "price": variant['price'],
-                "sku": variant['sku'],
-                "visible": True
+    color_by_item = get_all_color(item)
+    sizes_by_item = get_all_size(item)
 
-            })
-        else:
-            variants.append({
+    for color in color_by_item:
+        for size in sizes_by_item:
+            price = get_price_by_color_and_size(color, size, item['price'])
+            choices = {"Размер": size, "Цвет": color}
+
+            variant = {
                 "choices": choices,
-                "visible": False
-            })
-    variants_obj = {
-        "variants": variants
-    }
-    return variants_obj
+                "visible": bool(price) and price.get('isExist', False)
+            }
+
+            if variant["visible"]:
+                variant.update({
+                    "price": price['price'],
+                    "sku": price['sku'],
+                })
+
+            variants.append(variant)
+
+    return {"variants": variants}
 
 
 def get_media(item, max_photos=15):

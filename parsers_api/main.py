@@ -93,7 +93,8 @@ async def update_one_product_martimotos(product, rate, markups):
     try:
         logger.info(f"Product {product}")
         product_id = product.id_product
-        code = api.get_product(product_id).status_code
+        result_product_wix = api.get_product(product_id)
+        code = result_product_wix.status_code
         if code == 404:
             logger.info(f"Product with id {product_id} not found in wix")
             db.delete_by_id(product.id)
@@ -104,8 +105,12 @@ async def update_one_product_martimotos(product, rate, markups):
             api.reset_all_variant(product_id)
             api.update_product(product_to_wix, product_id)
             api.add_variants(product_id, product_to_wix.variantOptions)
-            api.delete_media(product_id)
-            api.add_media(product_id, product_to_wix.media)
+
+            #api.delete_media(product_id)
+
+            #product_to_wix.clean_media(result_product_wix.json())
+            #if len(product_to_wix.media['media']) > 0:
+            #    api.add_media(product_id, product_to_wix.media)
     except Exception as e:
         logger.error(f"Error update product: {product}")
         return product.id_product

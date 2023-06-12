@@ -5,6 +5,8 @@ from parsers.marti_motors.helper import get_variants, get_variant_with_price, ge
 from parsers.marti_motors_not_browser.marti_motors_parser import parse_by_url
 from parsers_api.currency_rate import CurrencyRate
 from parsers_api.data.markup import json_to_markup
+from parsers_api.my_helper.helpers import send_service_message
+from parsers_api.parsers.marti_motors_not_browser.helper import get_new_size
 
 from wix.site_items import WixItem
 from wix.wix_api import WixAPI
@@ -18,7 +20,7 @@ def is_duplicate(url):
     return len(db.get_data_by_url(url)) != 0
 
 
-async def add_product_marti_motors(url, category_id):
+def add_product_marti_motors(url, category_id):
     rate = CurrencyRate.get_rate_db()
     markups = db.get_markup(category_id)
 
@@ -35,24 +37,25 @@ async def add_product_marti_motors(url, category_id):
     return result
 
 
-async def update_price_marti_motors(id_product=None, url=None):
+def update_price_marti_motors(id_product=None, url=None):
     rate = CurrencyRate.get_rate_db()
     categories = db.get_categories()
     count_update_product = 0
     error_products = []
+    new_size = []
 
     if id_product is None and url is None:
         data_generator = db.get_data_where_batch("martimotos")
         for batch in data_generator:
             for product in batch:
                 markups = get_markup_by_category_id(categories, product.category_id)
-                result = await update_one_product_martimotos(product, rate, markups)
+                result = update_one_product_martimotos(product, rate, markups, new_size)
                 if result is not None:
                     error_products.append(result)
                 else:
                     count_update_product += 1
         products = db.get_products_by_ids(error_products)
-        new_count_update, error_products = await update_products(products, rate, categories)
+        new_count_update, error_products = update_products(products, rate, categories, new_size)
         count_update_product += new_count_update
     else:
         products = None
@@ -61,27 +64,28 @@ async def update_price_marti_motors(id_product=None, url=None):
         else:
             products = db.get_data_by_url(url)
 
-        count_update_product, result = await update_all_product_martimotos(products, rate, categories)
+        count_update_product, result = update_all_product_martimotos(products, rate, categories, new_size)
         error_products.append(result)
-
+    if len(new_size) > 0:
+        send_service_message(new_size, "new_size")
     return count_update_product, error_products
 
 
-async def update_all_product_martimotos(products, rate, categories):
-    count_update_product, error_products = await update_products(products, rate, categories)
+def update_all_product_martimotos(products, rate, categories, new_size):
+    count_update_product, error_products = update_products(products, rate, categories, new_size)
     if error_products:
         products = db.get_products_by_ids(error_products)
-        new_count_update, error_products = await update_products(products, rate, categories)
+        new_count_update, error_products = update_products(products, rate, categories, new_size)
         count_update_product += new_count_update
     return count_update_product, error_products
 
 
-async def update_products(products, rate, categories):
+def update_products(products, rate, categories, new_size):
     count_update_product = 0
     error_products = []
     for product in products:
         markups = get_markup_by_category_id(categories, product.category_id)
-        result = await update_one_product_martimotos(product, rate, markups)
+        result = update_one_product_martimotos(product, rate, markups, new_size)
         if result is not None:
             error_products.append(result)
         else:
@@ -89,7 +93,7 @@ async def update_products(products, rate, categories):
     return count_update_product, error_products
 
 
-async def update_one_product_martimotos(product, rate, markups):
+def update_one_product_martimotos(product, rate, markups, new_size):
     try:
         logger.info(f"Product {product}")
         product_id = product.id_product
@@ -105,18 +109,19 @@ async def update_one_product_martimotos(product, rate, markups):
             api.reset_all_variant(product_id)
             api.update_product(product_to_wix, product_id)
             api.add_variants(product_id, product_to_wix.variantOptions)
-
-            #api.delete_media(product_id)
-
-            #product_to_wix.clean_media(result_product_wix.json())
-            #if len(product_to_wix.media['media']) > 0:
-            #    api.add_media(product_id, product_to_wix.media)
+            current_new_size = get_new_size(result_product_wix.json(), item)
+            if len(current_new_size) > 0:
+                new_size.append({
+                    "name": item["name"],
+                    "url": product.url,
+                    "new_size": current_new_size
+                })
     except Exception as e:
         logger.error(f"Error update product: {product}")
         return product.id_product
 
 
-async def get_categories_main():
+def get_categories_main():
     logger.info("Starting get categories")
     categories = db.get_categories()
     categories_list = [c.to_dict() for c in categories]

@@ -37,5 +37,6 @@ def apply_markup(price: float, markups: List[Markup], url: str) -> float:
     logger.info(f"Current price {price}, applied_price {applied_price}, markup {markups}")
     if price == applied_price:
         send_service_message(
-            f"Product with url {url} is not applied markup. Price {price} and applied_price {applied_price}")
+            f"Product with url {url} is not applied markup. Price {price} and applied_price {applied_price}",
+            "not_apply_markup")
     return applied_price

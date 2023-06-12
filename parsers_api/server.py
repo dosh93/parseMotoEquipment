@@ -27,7 +27,7 @@ async def add_product():
     if is_duplicate(url):
         return f"Такой товар уже есть", 409
     if url:
-        result = await add_product_marti_motors(url, category_id)
+        result = add_product_marti_motors(url, category_id)
         logger.info(f'Product with URL "{url}" successfully added')
         product_url = result['productPageUrl']["base"] + result['productPageUrl']["path"]
         return f"Добавлен продукт. Вот ссылка {product_url}", 200
@@ -39,14 +39,14 @@ async def add_product():
 @app.route('/get_categories', methods=['GET'])
 async def get_categories():
     logger.info(f'Get categories')
-    categories = await get_categories_main()
+    categories = get_categories_main()
     return Response(categories, mimetype='application/json')
 
 
 @app.route('/update_prices', methods=['GET'])
 async def update_prices():
     try:
-        result, errors = await update_price_marti_motors()
+        result, errors = update_price_marti_motors()
         logger.debug('Prices of all products successfully updated')
         if len(errors) != 0:
             logger.warning(f'Not updated products with ids {errors}')
@@ -61,11 +61,11 @@ async def update_price():
     id_product = request.args.get('id', None)
 
     if url:
-        result = await update_price_marti_motors(url=url)
+        result = update_price_marti_motors(url=url)
         logger.info(f'Price of the product with URL "{url}" successfully updated')
         return f'Обновлено продуктов: {result}', 200
     elif id_product:
-        result = await update_price_marti_motors(id_product=id_product)
+        result = update_price_marti_motors(id_product=id_product)
         logger.info(f'Price of the product with ID {id_product} successfully updated')
         return f'Обновлено продуктов: {result}', 200
     else:

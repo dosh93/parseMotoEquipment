@@ -171,3 +171,19 @@ def get_all_data_for_parse(soup):
         except:
             continue
     return json_objects
+
+
+def get_new_size(wix_product, new_product):
+    current_choices = set(frozenset({
+        'color': variant['choices']['Цвет'],
+        'size': variant['choices']['Размер']
+    }.items()) for variant in wix_product['product']['variants'] if variant['variant']['visible'])
+
+    new_choices = set(frozenset({
+        'color': variant['color_name'],
+        'size': variant['size_name']
+    }.items()) for variant in new_product['price'] if variant['isExist'])
+
+    difference = [dict(i) for i in new_choices - current_choices]
+    return difference
+

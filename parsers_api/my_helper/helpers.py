@@ -1,4 +1,5 @@
 import asyncio
+import json
 import math
 import os
 from configparser import ConfigParser
@@ -30,6 +31,8 @@ def get_price_rub(price, rate):
     return math.ceil(rate * price)
 
 
-def send_service_message(message):
+def send_service_message(message, type_message):
     url = config.get('send_message', 'url')
-    requests.get(url, params={'text': message, 'service_name': 'parsers_api'})
+    if isinstance(message, list):
+        message = json.dumps(message, ensure_ascii=False)
+    requests.get(url, params={'text': message, 'service_name': 'parsers_api', 'type_message': type_message})

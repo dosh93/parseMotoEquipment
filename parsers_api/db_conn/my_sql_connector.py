@@ -1,4 +1,4 @@
-from pony.orm import Database, Required, Set, PrimaryKey, Optional, db_session, commit, select
+from pony.orm import Database, Required, Set, LongStr, PrimaryKey, Optional, db_session, commit, select
 from configparser import ConfigParser
 
 from parsers_api.data.markup import json_to_markup
@@ -15,13 +15,15 @@ class Product(db.Entity):
     id_product = Required(str)
     name_site = Required(str)
     category_id = Required(int)
+    last_rate = Required(float)
+    last_json_markup = Required(LongStr)
 
 
 class Category(db.Entity):
     _table_ = 'categories'
     id = PrimaryKey(int, auto=True)
     name = Required(str)
-    json_markup = Required(str)
+    json_markup = Required(LongStr)
 
 
 class EuroRate(db.Entity):
@@ -48,9 +50,10 @@ class MySQLConnector:
         logger.debug("MySQLConnector initialized with config file: %s", config_file)
 
     @db_session
-    def save_data(self, url, id_product, name_site, category_id):
+    def save_data(self, url, id_product, name_site, category_id, rate, json_markup):
         try:
-            Product(url=url, id_product=id_product, name_site=name_site, category_id=category_id)
+            Product(url=url, id_product=id_product, name_site=name_site, category_id=category_id, last_rate=rate,
+                    last_json_markup=json_markup)
             db.commit()
             logger.info("Data saved: url=%s, id_product=%s, name_site=%s, category_id=%s", url, id_product, name_site,
                         category_id)
@@ -70,6 +73,11 @@ class MySQLConnector:
         data = list(Product.select(lambda p: p.url == url))
         logger.info("Fetched %d rows", len(data))
         return data
+
+    @db_session
+    def update_product_after_update_price(self, product, rate, markup):
+        product.last_rate = rate
+        product.last_json_markup = markup
 
     def get_data_where_batch(self, name_site, batch_size=100):
         offset = 0
@@ -106,8 +114,10 @@ class MySQLConnector:
     def get_markup(self, category_id):
         logger.info("Getting markup for category ID: %s", category_id)
         try:
-            markup = Category[category_id].json_markup
+            category = Category[category_id]
+            markup = category.json_markup
             logger.info("Got markup for category ID: %s", category_id)
+            logger.debug("Markup for category ID: %s", markup)
             return json_to_markup(markup)
         except Exception as e:
             logger.error("Error getting markup for category ID: %s, %s", category_id, e)
@@ -116,7 +126,7 @@ class MySQLConnector:
     def get_categories(self):
         logger.info("Getting all categories")
         try:
-            categories = list(Category.select())
+            categories = list(Category.select().prefetch(Category.json_markup))
             logger.info("Got %s categories", len(categories))
             return categories
         except Exception as e:
@@ -131,4 +141,3 @@ class MySQLConnector:
             return products
         except Exception as e:
             logger.error("Error getting products with ids: %s", e)
-

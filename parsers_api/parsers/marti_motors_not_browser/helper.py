@@ -1,11 +1,12 @@
 import json
 import re
 
-from parsers_api.data.markup import apply_markup
+from parsers_api.data.markup import apply_markup, remove_markup
 from parsers_api.logger import logger
 from parsers_api.my_helper.helpers import get_price_rub
 from parsers_api.parsers.common_marti_motors.common import get_price_with_promo
 from collections import defaultdict
+from itertools import groupby
 
 
 def extract_json_objects(text, decoder=json.JSONDecoder()):
@@ -175,15 +176,51 @@ def get_all_data_for_parse(soup):
 
 def get_new_size(wix_product, new_product):
     current_choices = set(frozenset({
-        'color': variant['choices']['Цвет'],
-        'size': variant['choices']['Размер']
-    }.items()) for variant in wix_product['product']['variants'] if variant['variant']['visible'])
+                                        'color': variant['choices']['Цвет'],
+                                        'size': variant['choices']['Размер']
+                                    }.items()) for variant in wix_product['product']['variants'] if
+                          variant['variant']['visible'])
 
     new_choices = set(frozenset({
-        'color': variant['color_name'],
-        'size': variant['size_name']
-    }.items()) for variant in new_product['price'] if variant['isExist'])
+                                    'color': variant['color_name'],
+                                    'size': variant['size_name']
+                                }.items()) for variant in new_product['price'] if variant['isExist'])
 
     difference = [dict(i) for i in new_choices - current_choices]
     return difference
 
+
+def group_by_color(product_variants):
+    return [{'color': key, 'items': list(group)} for key, group in
+            groupby(product_variants, key=lambda d: d['choices']['Цвет'])]
+
+
+def get_new_price(result_product_wix, last_rate, last_markups, item, rate, markups):
+    result = []
+    grouped_wix_product = group_by_color(result_product_wix['product']['variants'])
+    color_result = defaultdict(list)
+
+    for choices in grouped_wix_product:
+        for choice in choices['items']:
+            if not choice['variant']['visible']:
+                continue
+            for price in item['price']:
+                if not price['isExist']:
+                    continue
+                if choice['variant']['sku'] != price['sku']:
+                    continue
+                old_price = remove_markup(float(choice['variant']['priceData']['price']) / float(last_rate), last_markups)
+                new_price = remove_markup(float(price['price']) / float(rate), markups)
+                if new_price < old_price and new_price < old_price * 1.01:
+                    color_result[choices['color']].append({
+                        'size': choice['choices']['Размер'],
+                        'new_price': int(new_price),
+                        'old_price': int(old_price)
+                    })
+    for color, variants in color_result.items():
+        if variants:
+            result.append({
+                'color': color,
+                'variants': variants
+            })
+    return result

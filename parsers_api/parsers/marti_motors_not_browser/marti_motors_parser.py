@@ -6,7 +6,7 @@ from parsers_api.logger import logger
 from bs4 import BeautifulSoup
 
 from parsers_api.parsers.marti_motors_not_browser.helper import get_images, get_description, get_prices, get_one_price, \
-    get_photo_by_color, get_all_data_for_parse
+    get_photo_by_color, get_all_data_for_parse, get_min_price_eur
 from parsers_api.parsers.marti_motors_not_browser.parser_attributes import process_json_attributes
 from parsers_api.parsers.marti_motors_not_browser.parser_product import process_json_product
 from parsers_api.parsers.marti_motors_not_browser.parser_link_images import process_json_link_images
@@ -30,6 +30,7 @@ def parse_by_url(url, rate, markups):
                 "photoByColor": get_photo_by_color(attributes, images, link_images),
                 "description": get_description(product)}
         item["one_price"] = get_one_price(item["price"])
+        item["min_price_eur"] = get_min_price_eur(item["price"])
         logger.info(f"Done parse {url}")
         logger.debug(f"json: \n{json.dumps(item, indent=2)}")
         return item

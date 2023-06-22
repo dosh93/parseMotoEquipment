@@ -33,7 +33,7 @@ def add_product_marti_motors(url, category_id):
     api.add_variants(result["id"], product_to_wix.variantOptions)
     api.add_media(result["id"], product_to_wix.media)
 
-    db.save_data(item["base_url"], result["id"], "martimotos", category_id, rate, markup_to_json(markups))
+    db.save_data(item["base_url"], result["id"], "martimotos", category_id, item["min_price_eur"])
     return result
 
 
@@ -112,10 +112,9 @@ def update_one_product_martimotos(product, rate, markups, new_size, new_price):
             api.reset_all_variant(product_id)
             api.update_product(product_to_wix, product_id)
             api.add_variants(product_id, product_to_wix.variantOptions)
-            last_rate = product.last_rate
-            last_markups = json_to_markup(product.last_json_markup)
-            db.update_product_after_update_price(product, rate, markup_to_json(markups))
-            current_new_price = get_new_price(result_product_wix.json(), last_rate, last_markups, item, rate, markups)
+            last_price = product.last_price
+            db.update_product_after_update_price(product.id, item["min_price_eur"])
+            current_new_price = get_new_price(last_price, item)
             current_new_size = get_new_size(result_product_wix.json(), item)
             if len(current_new_size) > 0:
                 new_size.append({
@@ -124,7 +123,7 @@ def update_one_product_martimotos(product, rate, markups, new_size, new_price):
                     "new_size": current_new_size
                 })
 
-            if len(current_new_price) > 0:
+            if current_new_price is not None:
                 new_price.append({
                     "name": item["name"],
                     "url": product.url,

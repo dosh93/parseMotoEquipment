@@ -88,14 +88,15 @@ def get_prices(product, attributes, rate, markups, url):
     return [
         {
             **({'sku': offer.sku} if offer.availability else {}),
-            'price': get_price_rub(apply_markup(get_price_with_promo(url, attr.id_product_attribute), markups,
-                                                url), rate) if offer.availability else 0,
+            'price': get_price_rub(apply_markup(price_eur, markups, url), rate) if offer.availability else 0,
+            'price_eur': price_eur if offer.availability else 0,
             'isExist': offer.availability,
             'color_name': attr.attributes_values['1'],
             'size_name': attr.attributes_values['2']
         }
         for offer in product.offers.offers
-        if (attr := get_attribute(offer.sku, attributes))
+        if (attr := get_attribute(offer.sku, attributes)) and
+           (price_eur := get_price_with_promo(url, attr.id_product_attribute)) is not None
     ]
 
 
@@ -195,32 +196,10 @@ def group_by_color(product_variants):
             groupby(product_variants, key=lambda d: d['choices']['Цвет'])]
 
 
-def get_new_price(result_product_wix, last_rate, last_markups, item, rate, markups):
-    result = []
-    grouped_wix_product = group_by_color(result_product_wix['product']['variants'])
-    color_result = defaultdict(list)
+def get_new_price(last_price, item):
+    if last_price > item['min_price_eur']:
+        return {'new_price': item['min_price_eur'], 'old_price': last_price}
 
-    for choices in grouped_wix_product:
-        for choice in choices['items']:
-            if not choice['variant']['visible']:
-                continue
-            for price in item['price']:
-                if not price['isExist']:
-                    continue
-                if choice['variant']['sku'] != price['sku']:
-                    continue
-                old_price = remove_markup(float(choice['variant']['priceData']['price']) / float(last_rate), last_markups)
-                new_price = remove_markup(float(price['price']) / float(rate), markups)
-                if new_price < old_price and new_price < old_price * 1.01:
-                    color_result[choices['color']].append({
-                        'size': choice['choices']['Размер'],
-                        'new_price': int(new_price),
-                        'old_price': int(old_price)
-                    })
-    for color, variants in color_result.items():
-        if variants:
-            result.append({
-                'color': color,
-                'variants': variants
-            })
-    return result
+
+def get_min_price_eur(prices):
+    return min(item['price_eur'] for item in prices if item['price_eur'] > 0)

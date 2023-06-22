@@ -52,10 +52,7 @@ async def process_message_parsers_api(text, type_message):
         for one in json_obj:
             current_text = "----------\n"
             current_text += f"<a href='{one['url']}'>{one['name']}</a>\n"
-            for new_price in one['new_price']:
-                current_text += f"{new_price['color']}: "
-                first_variant = new_price['variants'][0]
-                current_text += f"{first_variant['old_price']}€ ➡️ {first_variant['new_price']}€\n"
+            current_text += f"{one['new_price']['old_price']}€ ➡️ {one['new_price']['new_price']}€\n"
 
             if len(current_text) + len(text) > MAX_MESSAGE_SIZE:
                 await bot.send_message(CHANNEL_ID_NEW_PRICE, text, parse_mode='HTML', disable_web_page_preview=True)

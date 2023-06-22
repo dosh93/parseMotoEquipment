@@ -2,6 +2,7 @@ from pony.orm import Database, Required, Set, LongStr, PrimaryKey, Optional, db_
 from configparser import ConfigParser
 
 from parsers_api.data.markup import json_to_markup
+from parsers_api.db_conn.dto import ProductDTO
 from parsers_api.logger import logger
 import os
 
@@ -15,8 +16,7 @@ class Product(db.Entity):
     id_product = Required(str)
     name_site = Required(str)
     category_id = Required(int)
-    last_rate = Required(float)
-    last_json_markup = Required(LongStr)
+    last_price = Required(float)
 
 
 class Category(db.Entity):
@@ -50,34 +50,39 @@ class MySQLConnector:
         logger.debug("MySQLConnector initialized with config file: %s", config_file)
 
     @db_session
-    def save_data(self, url, id_product, name_site, category_id, rate, json_markup):
+    def save_data(self, url, id_product, name_site, category_id, price):
         try:
-            Product(url=url, id_product=id_product, name_site=name_site, category_id=category_id, last_rate=rate,
-                    last_json_markup=json_markup)
+            Product(url=url, id_product=id_product, name_site=name_site, category_id=category_id, last_price=price)
             db.commit()
             logger.info("Data saved: url=%s, id_product=%s, name_site=%s, category_id=%s", url, id_product, name_site,
                         category_id)
         except Exception as e:
             logger.error("Error saving data: %s", e)
 
+    def product_to_dto(self, product):
+        return ProductDTO(product.id, product.url, product.id_product, product.name_site, product.category_id,
+                          product.last_price)
+
     @db_session
     def get_data_by_id_product(self, id_product):
         logger.info("Fetching data with condition: id_product=%s", id_product)
         data = list(Product.select(lambda p: p.id_product == id_product))
         logger.info("Fetched %d rows", len(data))
-        return data
+        result = [self.product_to_dto(p) for p in data]
+        return result
 
     @db_session
     def get_data_by_url(self, url):
         logger.info("Fetching data with condition: url=%s", url)
         data = list(Product.select(lambda p: p.url == url))
         logger.info("Fetched %d rows", len(data))
-        return data
+        result = [self.product_to_dto(p) for p in data]
+        return result
 
     @db_session
-    def update_product_after_update_price(self, product, rate, markup):
-        product.last_rate = rate
-        product.last_json_markup = markup
+    def update_product_after_update_price(self, product_id, price):
+        product = Product.get(id=product_id)
+        product.last_price = price
 
     def get_data_where_batch(self, name_site, batch_size=100):
         offset = 0
@@ -138,6 +143,7 @@ class MySQLConnector:
         try:
             products = select(p for p in Product if p.id_product in product_ids)[:]
             logger.info("Got %s products", len(products))
-            return products
+            result = [self.product_to_dto(p) for p in products]
+            return result
         except Exception as e:
             logger.error("Error getting products with ids: %s", e)

@@ -202,4 +202,6 @@ def get_new_price(last_price, item):
 
 
 def get_min_price_eur(prices):
-    return min(item['price_eur'] for item in prices if item['price_eur'] > 0)
+    positive_prices = [item['price_eur'] for item in prices if item['price_eur'] > 0]
+    return min(positive_prices) if positive_prices else 0
+

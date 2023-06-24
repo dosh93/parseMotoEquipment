@@ -34,10 +34,4 @@ def get_price_with_promo(url, id_product_attribute):
 
     if response.status_code == 200:
         response_json = response.json()
-        return response_json.get('price')
-
-    response = requests.post(url, headers=headers, data=data)
-
-    if response.status_code == 200:
-        response_json = response.json()
-        return response_json.get('price')
+        return round(response_json.get('price'), 2)

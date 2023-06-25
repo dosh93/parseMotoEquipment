@@ -20,6 +20,7 @@ BOT_TOKEN = config.get("bot", "token")
 CHANNEL_ID_SERVICE = config.get('bot', 'channel_id_service')
 CHANNEL_ID_NEW_SIZE = config.get('bot', 'channel_id_new_size')
 CHANNEL_ID_NEW_PRICE = config.get('bot', 'channel_id_new_price')
+CHANNEL_ID_NEW_OUTLET = config.get('bot', 'channel_id_new_outlet')
 MAX_MESSAGE_SIZE = config.getint('bot', 'max_message_size')
 
 host = config.get('flask_app', 'host', fallback='0.0.0.0')
@@ -60,6 +61,17 @@ async def process_message_parsers_api(text, type_message):
             else:
                 text += current_text
         await bot.send_message(CHANNEL_ID_NEW_PRICE, text, parse_mode='HTML', disable_web_page_preview=True)
+    elif type_message == 'new_outlets':
+        text = f"{now.strftime('%d-%m-%Y')}\n<b>Новые товары в аутлете</b>\n"
+        for one in json_obj:
+            current_text = f"<a href='{one['url']}'>{one['name']}</a>\n"
+
+            if len(current_text) + len(text) > MAX_MESSAGE_SIZE:
+                await bot.send_message(CHANNEL_ID_NEW_OUTLET, text, parse_mode='HTML', disable_web_page_preview=True)
+                text = current_text
+            else:
+                text += current_text
+        await bot.send_message(CHANNEL_ID_NEW_OUTLET, text, parse_mode='HTML', disable_web_page_preview=True)
     else:
         await bot.send_message(CHANNEL_ID_SERVICE, text)
 

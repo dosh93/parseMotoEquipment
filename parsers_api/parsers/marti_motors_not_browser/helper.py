@@ -7,6 +7,7 @@ from parsers_api.my_helper.helpers import get_price_rub
 from parsers_api.parsers.common_marti_motors.common import get_price_with_promo
 from collections import defaultdict
 from itertools import groupby
+from lxml import html
 
 
 def extract_json_objects(text, decoder=json.JSONDecoder()):
@@ -205,3 +206,16 @@ def get_min_price_eur(prices):
     positive_prices = [item['price_eur'] for item in prices if item['price_eur'] > 0]
     return min(positive_prices) if positive_prices else 0
 
+
+def get_page_count(soup):
+    xpath_expr = "//div[@class='pagination clearfix']//li[last()-1]/a/span/text()"
+    return int(html.fromstring(str(soup)).xpath(xpath_expr)[0])
+
+
+def get_product_links_and_names(soup):
+    links_xpath_expr = "//*[@id='product_list']//a[@class='product_link']/@href"
+    names_xpath_expr = "//*[@id='product_list']//a[@class='product_link']//span/text()"
+    page_html = html.fromstring(str(soup))
+    links = page_html.xpath(links_xpath_expr)
+    names = [' '.join(name.split()) for name in page_html.xpath(names_xpath_expr)]
+    return dict(zip(links, names))

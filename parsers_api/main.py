@@ -2,7 +2,7 @@ import json
 
 from db_conn.my_sql_connector import MySQLConnector
 from parsers.marti_motors.helper import get_variants, get_variant_with_price, get_media
-from parsers.marti_motors_not_browser.marti_motors_parser import parse_by_url
+from parsers.marti_motors_not_browser.marti_motors_parser import parse_by_url, parse_outlets
 from parsers_api.currency_rate import CurrencyRate
 from parsers_api.data.markup import json_to_markup, markup_to_json
 from parsers_api.my_helper.helpers import send_service_message
@@ -145,3 +145,14 @@ def get_markup_by_category_id(categories, category_id):
     for category in categories:
         if category.id == category_id:
             return json_to_markup(category.json_markup)
+
+
+def outlets_martimotos():
+    outlets_pages = parse_outlets()
+    new_outlets = []
+    for outlet in outlets_pages:
+        new_outlets.extend(db.save_outlet_data(outlet, "martimotos"))
+    db.update_outlet_data()
+    if len(new_outlets) > 0:
+        send_service_message(new_outlets, "new_outlets")
+    return new_outlets

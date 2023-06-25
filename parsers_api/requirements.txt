@@ -4,3 +4,4 @@ pyppeteer
 pymysql
 quart
 pony
+lxml

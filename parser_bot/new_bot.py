@@ -34,10 +34,11 @@ dp = Dispatcher(bot, storage=storage)
 dp.middleware.setup(LoggingMiddleware())
 
 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-markup.row("Добавить", "Обновить все цены", "Обновить цену товара")
+markup.row("Добавить", "Обновить все цены", "Обновить цену товара", "Обновить аутлет")
 category_callback = CallbackData("category", "id", "name")
 current_category = {}
 timeout = aiohttp.ClientTimeout(total=22000)
+
 
 class AddProduct(StatesGroup):
     waiting_for_links = State()
@@ -45,6 +46,15 @@ class AddProduct(StatesGroup):
 
 class UpdatePrice(StatesGroup):
     waiting_for_url_or_id = State()
+
+
+async def update(message, type):
+    logger.info(f"Start command {message.text} with chat_id {message.chat.id}")
+    async with ClientSession(timeout=timeout) as session:
+        async with session.get(f"http://{API_HOST}:{API_PORT}/{type}") as resp:
+            result = await resp.text()
+            await message.reply(result)
+    logger.info(f"End command {message.text} with chat_id {message.chat.id}")
 
 
 async def fetch(url):
@@ -94,12 +104,7 @@ async def category_callback_handler(query: types.CallbackQuery, callback_data: d
 
 @dp.message_handler(lambda message: message.text == "Обновить все цены", chat_id=ALLOWED_CHAT_IDS)
 async def update_prices(message: types.Message):
-    logger.info(f"Start command {message.text} with chat_id {message.chat.id}")
-    async with ClientSession(timeout=timeout) as session:
-        async with session.get(f"http://{API_HOST}:{API_PORT}/update_prices") as resp:
-            result = await resp.text()
-            await message.reply(result)
-    logger.info(f"End command {message.text} with chat_id {message.chat.id}")
+    await update(message, "update_prices")
 
 
 @dp.message_handler(lambda message: message.text == "Обновить цену товара", chat_id=ALLOWED_CHAT_IDS)
@@ -146,6 +151,11 @@ async def process_url_or_id(message: types.Message, state):
     await message.reply(result, reply_markup=markup)
     await state.finish()
     logger.info(f"End command {message.text} with chat_id {message.chat.id}")
+
+
+@dp.message_handler(lambda message: message.text == "Обновить аутлет", chat_id=ALLOWED_CHAT_IDS)
+async def update_outlet(message: types.Message):
+    await update(message, "update_outlet")
 
 
 if __name__ == "__main__":

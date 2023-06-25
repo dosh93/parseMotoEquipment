@@ -4,6 +4,7 @@ from configparser import ConfigParser
 from parsers_api.data.markup import json_to_markup
 from parsers_api.db_conn.dto import ProductDTO
 from parsers_api.logger import logger
+from datetime import datetime
 import os
 
 db = Database()
@@ -31,6 +32,16 @@ class EuroRate(db.Entity):
     id = PrimaryKey(int)
     rate = Required(float)
     timestamp = Required(str)
+
+
+class Outlet(db.Entity):
+    _table_ = 'outlets'
+    id = PrimaryKey(int, auto=True)
+    url = Required(str, index=True)
+    product_name = Required(str, index=True)
+    name_site = Required(str, index=True)
+    timestamp = Optional(datetime)
+    check = Required(bool)
 
 
 class MySQLConnector:
@@ -147,3 +158,39 @@ class MySQLConnector:
             return result
         except Exception as e:
             logger.error("Error getting products with ids: %s", e)
+
+    @db_session
+    def save_outlet_data(self, data_list, name_site):
+        new_entries = []
+        logger.info("Saving outlets")
+        logger.debug("Data for saving outlet: %s", data_list)
+        try:
+            for url, name in data_list.items():
+                outlet = Outlet.get(url=url, product_name=name, name_site=name_site)
+                if outlet:
+                    outlet.timestamp = datetime.now()
+                    outlet.check = True
+                    logger.debug(f"{url} {name} exists in outlet")
+                else:
+                    Outlet(url=url, product_name=name, name_site=name_site,
+                           timestamp=datetime.now(), check=True)
+                    new_entries.append({"url": url, "name": name})
+                    logger.debug(f"{url} {name} new in outlet")
+                commit()
+            logger.info("New outlets: %s", new_entries)
+            return new_entries
+        except Exception as e:
+            logger.error("Error saving outlets: %s", e)
+
+    @db_session
+    def update_outlet_data(self):
+        logger.info("Deleting old outlet data")
+        try:
+            Outlet.select(lambda o: not o.check).delete(bulk=True)
+            logger.info("Deleted old outlet data is successfully")
+            for outlet in Outlet.select():
+                outlet.check = False
+                commit()
+            logger.info("Set all outlets check = false is successfully")
+        except Exception as e:
+            logger.error("Error deleting old outlet: %s", e)

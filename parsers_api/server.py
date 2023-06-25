@@ -4,11 +4,11 @@ import os
 
 from quart import Quart, request
 
-from main import add_product_marti_motors, update_price_marti_motors, is_duplicate, get_categories_main
+from main import add_product_marti_motors, update_price_marti_motors, is_duplicate, get_categories_main, \
+    outlets_martimotos
 from parsers_api.logger import logger
 
 app = Quart(__name__)
-
 
 config = configparser.ConfigParser()
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -71,6 +71,17 @@ async def update_price():
     else:
         logger.error('URL or ID parameters not provided')
         return 'URL or ID parameters not provided', 400
+
+
+@app.route('/update_outlet', methods=['GET'])
+async def update_outlet():
+    try:
+        result = outlets_martimotos()
+        logger.info(f'New product in outlet {len(result)}')
+        return f'Новых товаров в аутлете: {len(result)}', 200
+    except Exception as e:
+        logger.error(f'Error in update outlet {e}')
+        return f"Что-то пошло не так: {e}", 500
 
 
 if __name__ == '__main__':

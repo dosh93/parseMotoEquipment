@@ -198,7 +198,7 @@ def group_by_color(product_variants):
 
 
 def get_new_price(last_price, item):
-    if last_price > item['min_price_eur']:
+    if last_price > item['min_price_eur'] > 0:
         return {'new_price': item['min_price_eur'], 'old_price': last_price}
 
 

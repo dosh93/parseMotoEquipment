@@ -1,9 +1,8 @@
 import configparser
 import os
-
+import schedule
 import requests
 import time
-from datetime import datetime, timedelta
 
 from common.logger import configure_logger
 
@@ -15,11 +14,17 @@ def read_config():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, "config.ini")
     config.read(config_path)
-    url = config.get('URL', 'url_to_call')
+    urls = [(config.get('URL', 'url_to_call'), config.get('URL', 'start_time'))]
     url_send_message = config.get('URL', 'url_to_send_message')
-    interval = config.getint('URL', 'interval')
-    start_time = config.get('URL', 'start_time')
-    return url, interval, start_time, url_send_message
+
+    i = 2
+    while True:
+        try:
+            urls.append((config.get(f'URL', f'url_to_call_{i}'), config.get(f'URL', f'start_time_{i}')))
+            i += 1
+        except configparser.NoOptionError:
+            break
+    return urls, url_send_message
 
 
 def call_url(url, url_send_message):
@@ -36,25 +41,18 @@ def call_url(url, url_send_message):
         requests.get(url_send_message, params={'text': message, 'service_name': 'service_update_price'})
 
 
-def time_until_next_run(start_time_str, interval):
-    start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
-    now = datetime.now()
-    today_start = now.replace(hour=start_time.hour, minute=start_time.minute, second=start_time.second, microsecond=0)
-    if now < today_start:
-        return (today_start - now).total_seconds()
-    else:
-        next_start = today_start + timedelta(seconds=interval)
-        return (next_start - now).total_seconds()
+def job(url, url_send_message):
+    call_url(url, url_send_message)
 
 
 def main():
-    url, interval, start_time, url_send_message = read_config()
-    logger.debug(f'Config values: URL={url}, interval={interval}, start_time={start_time}')
+    urls, url_send_message = read_config()
+    for url, start_time in urls:
+        schedule.every().day.at(start_time).do(job, url=url, url_send_message=url_send_message)
+
     while True:
-        time_to_next_run = time_until_next_run(start_time, interval)
-        logger.debug(f'Sleeping for {time_to_next_run} seconds')
-        time.sleep(time_to_next_run)
-        call_url(url, url_send_message)
+        schedule.run_pending()
+        time.sleep(1)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import os
 import requests
 
 from parsers_api.logger import logger
+from parsers_api.wix.site_items import get_product_for_update_description
 
 
 class WixAPI:
@@ -75,6 +76,15 @@ class WixAPI:
         else:
             logger.warning(f"Update product {product.product['product']['name']} failed")
             return None
+
+    def update_description(self, description, id_product):
+        logger.info(f"Updating product description {id_product}")
+        logger.debug(f"Product description {description}")
+        result = self.__patch(f"/stores/v1/products/{id_product}", get_product_for_update_description(description))
+        if result is not None:
+            logger.info(f"Update product description successfully with id {id_product}")
+        else:
+            logger.warning(f"Update product description {id_product} failed")
 
     def add_variants(self, id_product, variants):
         logger.info(f"Adding variants to product with id {id_product}")

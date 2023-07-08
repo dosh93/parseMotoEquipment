@@ -82,6 +82,7 @@ def get_description(product):
         description_text += f"<li><strong>{key}</strong> - {value}</li>\n"
     if len(spec) > 0:
         description_text += "</ul>"
+    description_text = description_text.replace("martimotos.com", "eurorider.ru")
     return description_text
 
 

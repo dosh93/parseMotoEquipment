@@ -1,3 +1,11 @@
+def get_product_for_update_description(description):
+    return {
+        "product": {
+            "description": description
+        }
+    }
+
+
 class WixItem:
 
     def __init__(self, name: str, price: int, description: str, product_options: list, variant_options: list,

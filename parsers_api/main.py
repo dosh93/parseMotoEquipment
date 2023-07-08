@@ -5,6 +5,7 @@ from parsers.marti_motors.helper import get_variants, get_variant_with_price, ge
 from parsers.marti_motors_not_browser.marti_motors_parser import parse_by_url, parse_outlets
 from parsers_api.currency_rate import CurrencyRate
 from parsers_api.data.markup import json_to_markup, markup_to_json
+from parsers_api.my_helper.YandexTranslateApi import YandexTranslateApi
 from parsers_api.my_helper.helpers import send_service_message
 from parsers_api.parsers.marti_motors_not_browser.helper import get_new_size, get_new_price
 
@@ -14,6 +15,7 @@ from parsers_api.logger import logger
 
 api = WixAPI()
 db = MySQLConnector()
+translator = YandexTranslateApi()
 
 
 def is_duplicate(url):
@@ -25,8 +27,8 @@ def add_product_marti_motors(url, category_id):
     markups = db.get_markup(category_id)
 
     item = parse_by_url(url, rate, markups)
-
-    product_to_wix = WixItem(item["name"], item["one_price"], item["description"], get_variants(item),
+    description_rus = translator.translate('es', 'ru', item["description"])
+    product_to_wix = WixItem(item["name"], item["one_price"], description_rus, get_variants(item),
                              get_variant_with_price(item), get_media(item))
 
     result = api.add_product(product_to_wix)

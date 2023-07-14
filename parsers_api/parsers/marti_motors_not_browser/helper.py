@@ -73,7 +73,7 @@ def get_spec(product):
 
 
 def get_description(product):
-    description_text = product.description
+    description_text = product.description if product.description else ""
     description_text += "\n"
     spec = get_spec(product)
     if len(spec) > 0:
@@ -84,6 +84,7 @@ def get_description(product):
         description_text += "</ul>"
     description_text = description_text.replace("martimotos.com", "eurorider.ru")
     return description_text
+
 
 
 def get_prices(product, attributes, rate, markups, url):
